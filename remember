@@ -1,0 +1,3 @@
+export SPIN_VARIABLE_BSKY_HANDLE="verifiedsky.bsky.social"
+export SPIN_VARIABLE_BSKY_DID="did:plc:px34esz3zqocesnhjoyllu7q"
+export SPIN_VARIABLE_BSKY_PASSWORD="..."

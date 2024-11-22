@@ -1,0 +1,123 @@
+# 0123456789012345678901234567891
+AI - 
+AI - Azure AI Services
+AI - Azure AI Studio
+AI - Az. Machine Learning Studio
+AI - Responsible AI with Azure
+
+BizApps - 
+BizApps - AI ERP
+BizApps - Business Central
+BizApps - Copilot Studio
+BizApps - Customer Experience
+BizApps - Customer Service
+BizApps - Power Apps
+BizApps - Power Automate
+BizApps - Power Pages
+
+CDM - 
+CDM - Datacenter Management
+CDM - Enterpr. & Platf. Security
+CDM - High Availability
+CDM - Hyper-V
+CDM - Linux on Hyper-V
+CDM - On-premises and Hybrid AKS
+CDM - Container Management
+CDM - On-Premises Networking
+CDM - On-Premises Storage
+CDM - Windows Server
+
+Data Plat. - 
+Data Plat. - Analysis Services
+Data Plat. - Azure Arc
+Data Plat. - Azure Cosmos DB
+Data Plat. - Azure Data Lake
+Data Plat. - Azure DB for MySQL
+Data Plat. - Azure DB PostgreSQL
+Data Plat. - Azure SQL
+Data Plat. - Azure Synapse
+Data Plat. - Data Eng. in Fabric
+Data Plat. - Data Integration
+Data Plat. - DB Dev & DevOps
+Data Plat. - Microsoft Fabric
+Data Plat. - Microsoft Purview
+Data Plat. - Pag. Op. Reports
+Data Plat. - Power BI
+Data Plat. - RT Intelligence
+Data Plat. - SQL Server
+Data Plat. - SQL Server ML
+Data Plat. - Tools & Connectivity
+
+Dev Tech - 
+Dev Tech - .NET
+Dev Tech - C++
+Dev Tech - Developer Security
+Dev Tech - Developer Tools
+Dev Tech - DevOps
+Dev Tech - Java
+Dev Tech - Python
+Dev Tech - Web Development
+
+IoT - 
+IoT - Azure Edge Devices
+IoT - Azure IoT Services & Dev
+
+M365 - 
+M365 - Access
+M365 - Excel
+M365 - Exchange
+M365 - Loop
+M365 - M365 Copilot
+M365 - M365 Copilot Extensibility
+M365 - M365 Development
+M365 - Mesh
+M365 - Microsoft 365
+M365 - Advanced content mmgmt
+M365 - Microsoft Graph
+M365 - Microsoft Stream
+M365 - Microsoft Teams
+M365 - Microsoft Viva
+M365 - OneDrive
+M365 - OneNote
+M365 - Outlook
+M365 - Planner
+M365 - PowerPoint
+M365 - SharePoint
+M365 - Visio
+M365 - Word
+
+# 0123456789012345678901234567891
+Azure - 
+Azure - Application PaaS
+Azure - Compute Infrastructure
+Azure - Cost, Resource & Conf Mg.
+Azure - HPC & AI Infrastructure
+Azure - Hybrid & Migration
+Azure - Infrastructure as Code
+Azure - Innovation Hub
+Azure - Integration PaaS
+Azure - K8s and Open Source
+Azure - Networking
+Azure - Storage
+Azure - Well-Architected etc.
+Azure - PowerShell
+
+Security - 
+Security - Cloud Security
+Security - Azure net security
+Security - GitHub Adv. Security
+Security - Identity & Access
+Security - Microsoft Intune
+Security - Microsoft Purview
+Security - Microsoft Sec. Copilot
+Security - SIEM & XDR
+
+Windows Dev	- 
+Windows Dev	- Windows Design
+Windows Dev	- Windows Development
+
+Windows and Devices - 
+Windows and Devices - Azure VD
+Windows and Devices - Surface
+Windows and Devices - Windows
+Windows and Devices - Windows 365

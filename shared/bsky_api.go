@@ -1,0 +1,661 @@
+package shared
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
+	"github.com/fermyon/spin/sdk/go/v2/kv"
+	"github.com/fermyon/spin/sdk/go/v2/variables"
+
+	spinhttp "github.com/fermyon/spin/sdk/go/v2/http"
+)
+
+type AuthResponse struct {
+	Did       string `json:"did"`
+	DidDoc    DidDoc `json:"didDoc"`
+	Handle    string `json:"handle"`
+	Email     string `json:"email"`
+	AccessJwt string `json:"accessJwt"`
+}
+
+type StarterPackResponse struct {
+	StarterPacks []StarterPack `json:"starterPacks"`
+	Cursor       string        `json:"cursor"`
+}
+
+type StarterPack struct {
+	URI    string `json:"uri"`
+	CID    string `json:"cid"`
+	Record Record `json:"record"`
+}
+
+type Record struct {
+	Type        string `json:"$type"`
+	Description string `json:"description"`
+	List        string `json:"list"`
+	Name        string `json:"name"`
+	CreatedAt   string `json:"createdAt"`
+}
+
+type ListResponse struct {
+	Lists  []List `json:"lists"`
+	Cursor string `json:"cursor"`
+}
+
+type List struct {
+	URI           string    `json:"uri"`
+	CID           string    `json:"cid"`
+	Name          string    `json:"name"`
+	Purpose       string    `json:"purpose"`
+	ListItemCount int       `json:"listItemCount"`
+	IndexedAt     time.Time `json:"indexedAt"`
+	Labels        []string  `json:"labels"`
+	Description   string    `json:"description"`
+}
+
+type CreateRecordResponse struct {
+	URI              string `json:"uri"`
+	CID              string `json:"cid"`
+	ValidationStatus string `json:"validationStatus"`
+}
+
+type Service struct {
+	ID              string `json:"id"`
+	Type            string `json:"type"`
+	ServiceEndpoint string `json:"serviceEndpoint"`
+}
+
+type DidDoc struct {
+	Context     []string  `json:"@context"`
+	ID          string    `json:"id"`
+	AlsoKnownAs []string  `json:"alsoKnownAs"`
+	Service     []Service `json:"service"`
+}
+
+type ProfileResponse struct {
+	DID         string `json:"did"`
+	Handle      string `json:"handle"`
+	DisplayName string `json:"displayName"`
+}
+
+type AddedListOrStarterPack struct {
+	URL   string `json:"url"`
+	Titel string `json:"titel"`
+}
+
+func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle string, bskyDid string, accessJwt string, endpoint string) ([]AddedListOrStarterPack, error) {
+	store, err := kv.OpenStore("default")
+	if err != nil {
+		return []AddedListOrStarterPack{}, err
+	}
+	defer store.Close()
+
+	key := naming.Key + "-" + moduleKey
+
+	err = store.Set(key, []byte(bskyHandle))
+	if err != nil {
+		return []AddedListOrStarterPack{}, err
+	}
+
+	starterPacks, err := GetStarterPacks(accessJwt, endpoint)
+	if err != nil {
+		return []AddedListOrStarterPack{}, err
+	}
+
+	lists, err := GetLists(accessJwt, endpoint)
+	if err != nil {
+		return []AddedListOrStarterPack{}, err
+	}
+
+	addedToElements := make([]AddedListOrStarterPack, 0)
+	bskyHandleOwner, err := variables.Get("bsky_handle")
+	if err != nil {
+		return []AddedListOrStarterPack{}, err
+	}
+
+	starterPack, err := AddUserToStarterPack(bskyHandle, bskyDid, naming.Title, naming.Description, starterPacks, accessJwt, endpoint)
+	if err != nil {
+		return []AddedListOrStarterPack{}, err
+	}
+	addedToElements = append(addedToElements, ConvertToStruct(starterPack, naming.Title, "sp", bskyHandleOwner))
+
+	list, err := AddUserToList(bskyDid, naming.Title, lists, accessJwt, endpoint)
+	if err != nil {
+		return []AddedListOrStarterPack{}, err
+	}
+	addedToElements = append(addedToElements, ConvertToStruct(list, naming.Title, "list", bskyHandleOwner))
+
+	for first, secondArray := range naming.FirstAndSecondLevel {
+		starterPack, err = AddUserToStarterPack(bskyHandle, bskyDid, first.Title, first.Description, starterPacks, accessJwt, endpoint)
+		if err != nil {
+			return []AddedListOrStarterPack{}, err
+		}
+		addedToElements = append(addedToElements, ConvertToStruct(starterPack, first.Title, "sp", bskyHandleOwner))
+
+		list, err = AddUserToList(bskyDid, first.Title, lists, accessJwt, endpoint)
+		if err != nil {
+			return []AddedListOrStarterPack{}, err
+		}
+		addedToElements = append(addedToElements, ConvertToStruct(list, first.Title, "list", bskyHandleOwner))
+
+		for _, second := range secondArray {
+			starterPack, err = AddUserToStarterPack(bskyHandle, bskyDid, second.Title, second.Description, starterPacks, accessJwt, endpoint)
+			if err != nil {
+				return []AddedListOrStarterPack{}, err
+			}
+			addedToElements = append(addedToElements, ConvertToStruct(starterPack, second.Title, "sp", bskyHandleOwner))
+
+			list, err = AddUserToList(bskyDid, second.Title, lists, accessJwt, endpoint)
+			if err != nil {
+				return []AddedListOrStarterPack{}, err
+			}
+			addedToElements = append(addedToElements, ConvertToStruct(list, second.Title, "list", bskyHandleOwner))
+		}
+	}
+
+	return addedToElements, nil
+}
+
+func ConvertToStruct(uri string, title string, listOrStarterPack string, bskyHandle string) AddedListOrStarterPack {
+	ref := uri[strings.LastIndex(uri, "/")+1:]
+	if listOrStarterPack == "sp" {
+		return AddedListOrStarterPack{URL: "https://bsky.app/starter-pack/" + bskyHandle + "/" + ref, Titel: "Starter pack " + title}
+	} else {
+		return AddedListOrStarterPack{URL: "https://bsky.app/profile/" + bskyHandle + "/lists/" + ref, Titel: "List " + title}
+	}
+}
+
+func LoginToBsky() (string, string, error) {
+	bskyPwd, err := variables.Get("bsky_password")
+	if err != nil {
+		return "", "", err
+	}
+	return LoginToBskyWithPwd(bskyPwd)
+}
+
+func LoginToBskyWithReq(r *http.Request) (string, string, error) {
+	pwd := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
+	return LoginToBskyWithPwd(pwd)
+}
+
+func LoginToBskyWithPwd(bskyPwd string) (string, string, error) {
+	fmt.Println("Trying to log in to Bluesky")
+	url := "https://bsky.social/xrpc/com.atproto.server.createSession"
+	bskyHandle, err := variables.Get("bsky_handle")
+	if err != nil {
+		return "", "", err
+	}
+
+	payload := "{\"identifier\": \"" + bskyHandle + "\",\"password\": \"" + bskyPwd + "\"}"
+
+	resp, err := SendPost(url, payload, "")
+	defer resp.Body.Close()
+
+	var response AuthResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return "", "", err
+	}
+
+	fmt.Println("Logged in successfully")
+	return response.AccessJwt, response.DidDoc.Service[0].ServiceEndpoint, nil
+}
+
+func GetProfile(bskyHandle string, accessJwt string, endpoint string) (ProfileResponse, error) {
+	fmt.Println("Getting profile for Bluesky handle " + bskyHandle)
+	url := endpoint + "/xrpc/app.bsky.actor.getProfile?actor=" + url.QueryEscape(bskyHandle)
+
+	resp, err := SendGet(url, accessJwt)
+	if err != nil {
+		return ProfileResponse{}, err
+	}
+
+	var response ProfileResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return ProfileResponse{}, err
+	}
+	fmt.Println("Got profile successfully with DID " + response.DID)
+	return response, nil
+}
+
+func GetStarterPacks(accessJwt string, endpoint string) ([]StarterPack, error) {
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return []StarterPack{}, err
+	}
+	fmt.Println("Getting starter packs for DID " + bskyDid)
+
+	starterPacks := make([]StarterPack, 0)
+	hasMore := 0
+	counterArg := ""
+	for hasMore < 1 {
+		url := endpoint + "/xrpc/app.bsky.graph.getActorStarterPacks?limit=100&actor=" + url.QueryEscape(bskyDid) + counterArg
+
+		resp, err := SendGet(url, accessJwt)
+		if err != nil {
+			return []StarterPack{}, err
+		}
+
+		var response StarterPackResponse
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		if err != nil {
+			return []StarterPack{}, err
+		}
+		starterPacks = append(starterPacks, response.StarterPacks...)
+
+		if response.Cursor != "" {
+			counterArg = "&cursor=" + response.Cursor
+		} else {
+			hasMore = 1
+		}
+	}
+
+	fmt.Printf("Got %d starter packs successfully\n", len(starterPacks))
+	return starterPacks, nil
+}
+
+func AddUserToStarterPack(bskyHandle string, bskyDid string, starterPackTitle string, starterPackDescription string, starterPacks []StarterPack, accessJwt string, endpoint string) (string, error) {
+	fmt.Println("Adding users to the right starter pack (title: " + starterPackTitle + ", description: " + starterPackDescription + ")")
+	var starterPackUri string
+	var starterPackListUri string
+	var createdAt string
+	var err error
+	for _, sp := range starterPacks {
+		if sp.Record.Name == starterPackTitle {
+			starterPackUri = sp.URI
+			starterPackListUri = sp.Record.List
+			starterPackDescription = sp.Record.Description
+			createdAt = sp.Record.CreatedAt
+			fmt.Println("Found existing starter pack with title " + starterPackTitle)
+			break
+		}
+	}
+
+	if starterPackListUri == "" {
+		fmt.Println("No matching starter pack found with title: " + starterPackTitle)
+		return "", fmt.Errorf("No matching starter pack found with title: " + starterPackTitle)
+	}
+
+	err = AddUserToStarterPackList(bskyDid, starterPackListUri, starterPackUri, starterPackTitle, starterPackDescription, createdAt, accessJwt, endpoint)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("Added users to the right starter pack")
+	return starterPackUri, nil
+}
+
+func AddUserToList(bskyDid string, listTitle string, lists []List, accessJwt string, endpoint string) (string, error) {
+	fmt.Println("Adding users to the right list (title: " + listTitle + ")")
+	var listUri string
+	var err error
+	for _, list := range lists {
+		if list.Name == listTitle {
+			listUri = list.URI
+			fmt.Println("Found existing list with title " + listTitle)
+			break
+		}
+	}
+
+	if listUri == "" {
+		fmt.Println("No matching list found with title: " + listTitle)
+		return "", fmt.Errorf("No matching list found with title: " + listTitle)
+	}
+
+	err = AddUserToStandaloneList(bskyDid, listUri, accessJwt, endpoint)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("Added users to the right list")
+	return listUri, nil
+}
+
+func CreateAllStarterPacksAndLists(naming Naming, accessJwt string, endpoint string) (string, error) {
+	starterPacks, err := GetStarterPacks(accessJwt, endpoint)
+	if err != nil {
+		return "", err
+	}
+
+	lists, err := GetLists(accessJwt, endpoint)
+	if err != nil {
+		return "", err
+	}
+
+	if CheckIfStarterPackExists(naming.Title, starterPacks) {
+		fmt.Println("Starter pack with title " + naming.Title + " already exists")
+	} else {
+		fmt.Println("Creating starter pack with title " + naming.Title + " and description " + naming.Description)
+		_, _, err := CreateStarterPack(naming.Title, naming.Description, time.Now().Format("2006-01-02T15:04:05.000Z"), accessJwt, endpoint)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if CheckIfListExists(naming.Title, lists) {
+		fmt.Println("List with title " + naming.Title + " already exists")
+	} else {
+		fmt.Println("Creating List with title " + naming.Title + " and description " + naming.Description)
+		_, err := CreateList(naming.Title, naming.Description, accessJwt, endpoint)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	for first, secondArray := range naming.FirstAndSecondLevel {
+		if CheckIfStarterPackExists(first.Title, starterPacks) {
+			fmt.Println("Starter pack with title " + first.Title + " already exists")
+		} else {
+			fmt.Println("Creating starter pack with title " + first.Title + " and description " + first.Description)
+			_, _, err := CreateStarterPack(first.Title, first.Description, time.Now().Format("2006-01-02T15:04:05.000Z"), accessJwt, endpoint)
+			if err != nil {
+				return "", err
+			}
+		}
+		if CheckIfListExists(first.Title, lists) {
+			fmt.Println("List with title " + first.Title + " already exists")
+		} else {
+			fmt.Println("Creating List with title " + first.Title + " and description " + first.Description)
+			_, err := CreateList(first.Title, first.Description, accessJwt, endpoint)
+			if err != nil {
+				return "", err
+			}
+		}
+		for _, second := range secondArray {
+			if CheckIfStarterPackExists(second.Title, starterPacks) {
+				fmt.Println("Starter pack with title " + second.Title + " already exists")
+			} else {
+				fmt.Println("Creating starter pack with title " + second.Title + " and description " + second.Description)
+				_, _, err = CreateStarterPack(second.Title, second.Description, time.Now().Format("2006-01-02T15:04:05.000Z"), accessJwt, endpoint)
+				if err != nil {
+					return "", err
+				}
+			}
+			if CheckIfListExists(second.Title, lists) {
+				fmt.Println("List with title " + second.Title + " already exists")
+			} else {
+				fmt.Println("Creating List with title " + second.Title + " and description " + second.Description)
+				_, err := CreateList(second.Title, second.Description, accessJwt, endpoint)
+				if err != nil {
+					return "", err
+				}
+			}
+		}
+	}
+
+	return "All starter packs and lists created successfully", nil
+}
+
+func CheckIfStarterPackExists(starterPackTitle string, starterPacks []StarterPack) bool {
+	for _, sp := range starterPacks {
+		if sp.Record.Name == starterPackTitle {
+			return true
+		}
+	}
+	return false
+}
+
+func CheckIfListExists(listTitle string, lists []List) bool {
+	for _, list := range lists {
+		if list.Name == listTitle {
+			return true
+		}
+	}
+	return false
+}
+
+func GetLists(accessJwt string, endpoint string) ([]List, error) {
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return []List{}, err
+	}
+	fmt.Println("Getting lists for DID " + bskyDid)
+
+	lists := make([]List, 0)
+	hasMore := 0
+	counterArg := ""
+	for hasMore < 1 {
+		url := endpoint + "/xrpc/app.bsky.graph.getLists?limit=100&actor=" + url.QueryEscape(bskyDid) + counterArg
+
+		resp, err := SendGet(url, accessJwt)
+		if err != nil {
+			return []List{}, err
+		}
+
+		var response ListResponse
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		if err != nil {
+			return []List{}, err
+		}
+		lists = append(lists, response.Lists...)
+
+		if response.Cursor != "" {
+			counterArg = "&cursor=" + response.Cursor
+		} else {
+			hasMore = 1
+		}
+	}
+
+	fmt.Printf("Got %d lists successfully\n", len(lists))
+	return lists, nil
+}
+
+func CreateList(listTitle string, listDescription string, accessJwt string, endpoint string) (CreateRecordResponse, error) {
+	fmt.Println("Creating list with title " + listTitle + " and description " + listDescription)
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return CreateRecordResponse{}, err
+	}
+
+	url := endpoint + "/xrpc/com.atproto.repo.createRecord"
+
+	payload := "{\"collection\": \"app.bsky.graph.list\",\"repo\": \"" + bskyDid + "\",\"record\": {\"name\": \"" + listTitle + "\",\"description\": \"" + listDescription + "\",\"createdAt\": \"" + time.Now().Format("2006-01-02T15:04:05.000Z") + "\",\"purpose\": \"app.bsky.graph.defs#curatelist\",\"$type\": \"app.bsky.graph.list\"}}"
+
+	fmt.Println("Creating list")
+	resp, err := SendPost(url, payload, accessJwt)
+
+	var listResponse CreateRecordResponse
+	err = json.NewDecoder(resp.Body).Decode(&listResponse)
+	if err != nil {
+		return CreateRecordResponse{}, err
+	}
+	if (listResponse == CreateRecordResponse{}) {
+		return CreateRecordResponse{}, fmt.Errorf("Error creating list, couldn't parse JSON")
+	}
+
+	return listResponse, nil
+}
+
+func AddUserToStandaloneList(userToAddDid string, listUri string, accessJwt string, endpoint string) error {
+	fmt.Println("Adding user " + userToAddDid + " to list with URI " + listUri)
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return err
+	}
+
+	url := endpoint + "/xrpc/com.atproto.repo.createRecord"
+
+	payload := "{\"collection\":\"app.bsky.graph.listitem\",\"repo\":\"" + bskyDid + "\",\"record\":{\"subject\":\"" + userToAddDid + "\",\"list\":\"" + listUri + "\",\"createdAt\":\"" + time.Now().Format("2006-01-02T15:04:05.000Z") + "\",\"$type\":\"app.bsky.graph.listitem\"}}"
+
+	_, err = SendPost(url, payload, accessJwt)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Added user to list successfully")
+	return nil
+}
+
+func CreateStarterPack(starterPackTitle string, starterPackDescription string, createdAt string, accessJwt string, endpoint string) (CreateRecordResponse, CreateRecordResponse, error) {
+	fmt.Println("Creating starter pack with title " + starterPackTitle + " and description " + starterPackDescription)
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return CreateRecordResponse{}, CreateRecordResponse{}, err
+	}
+
+	url := endpoint + "/xrpc/com.atproto.repo.createRecord"
+
+	payload := "{\"collection\": \"app.bsky.graph.list\",\"repo\": \"" + bskyDid + "\",\"record\": {\"name\": \"" + starterPackTitle + "\",\"description\": \"" + starterPackDescription + "\",\"createdAt\": \"" + createdAt + "\",\"purpose\": \"app.bsky.graph.defs#referencelist\",\"$type\": \"app.bsky.graph.list\"}}"
+
+	fmt.Println("Creating list for starter pack")
+	resp, err := SendPost(url, payload, accessJwt)
+
+	var listResponse CreateRecordResponse
+	err = json.NewDecoder(resp.Body).Decode(&listResponse)
+	if err != nil {
+		return CreateRecordResponse{}, CreateRecordResponse{}, err
+	}
+	if (listResponse == CreateRecordResponse{}) {
+		return CreateRecordResponse{}, CreateRecordResponse{}, fmt.Errorf("Error creating list for starter pack, couldn't parse JSON")
+	}
+
+	payload = "{\"collection\": \"app.bsky.graph.starterpack\",\"repo\": \"" + bskyDid + "\",\"record\": {\"name\": \"" + starterPackTitle + "\",\"description\": \"" + starterPackDescription + "\",\"list\": \"" + listResponse.URI + "\",\"feeds\": [],\"createdAt\": \"" + createdAt + "\",\"$type\": \"app.bsky.graph.starterpack\"}}"
+
+	fmt.Println("Making list a starter pack")
+	resp, err = SendPost(url, payload, accessJwt)
+	if err != nil {
+		return CreateRecordResponse{}, CreateRecordResponse{}, err
+	}
+
+	var starterPackResponse CreateRecordResponse
+	err = json.NewDecoder(resp.Body).Decode(&starterPackResponse)
+	if err != nil {
+		return CreateRecordResponse{}, CreateRecordResponse{}, err
+	}
+	if (starterPackResponse == CreateRecordResponse{}) {
+		return CreateRecordResponse{}, CreateRecordResponse{}, fmt.Errorf("Error creating list for starter pack, couldn't parse JSON")
+	}
+
+	fmt.Println("Created starter pack successfully at " + starterPackResponse.URI + " pointing to list at " + listResponse.URI)
+	return listResponse, starterPackResponse, nil
+}
+
+func AddUserToStarterPackList(userToAddDid string, listUri string, starterPackUri string, starterPackTitle string, starterPackDescription string, createdAt string, accessJwt string, endpoint string) error {
+	fmt.Println("Adding user " + userToAddDid + " to list with URI " + listUri + " and starter pack with URI " + starterPackUri)
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return err
+	}
+
+	url := endpoint + "/xrpc/com.atproto.repo.applyWrites"
+	now := time.Now()
+	timestamp := now.Format("2006-01-02T15:04:05.000Z")
+
+	payload := "{\"repo\": \"" + bskyDid + "\",\"writes\": [{\"$type\": \"com.atproto.repo.applyWrites#create\",\"collection\": \"app.bsky.graph.listitem\",\"value\": {\"$type\": \"app.bsky.graph.listitem\",\"subject\": \"" + userToAddDid + "\",\"list\": \"" + listUri + "\",\"createdAt\": \"" + timestamp + "\"}}]}"
+
+	_, err = SendPost(url, payload, accessJwt)
+	if err != nil {
+		return err
+	}
+
+	url = endpoint + "/xrpc/com.atproto.repo.putRecord"
+	rkey := starterPackUri[strings.LastIndex(starterPackUri, "/")+1:]
+
+	payload = "{\"repo\": \"" + bskyDid + "\",\"collection\": \"app.bsky.graph.starterpack\",\"rkey\": \"" + rkey + "\",\"record\": {\"name\": \"" + starterPackTitle + "\",\"description\": \"" + starterPackDescription + "\",\"list\": \"" + listUri + "\",\"feeds\": [],\"createdAt\": \"" + createdAt + "\",\"updatedAt\": \"" + timestamp + "\"}}"
+
+	_, err = SendPost(url, payload, accessJwt)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Added user to list successfully")
+	return nil
+}
+
+func DeleteStarterPack(rkey string, accessJwt string, endpoint string) (string, error) {
+	fmt.Println("Deleting starter pack with rkey " + rkey)
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return "", err
+	}
+
+	url := endpoint + "/xrpc/com.atproto.repo.deleteRecord"
+
+	payload := "{\"repo\": \"" + bskyDid + "\",\"collection\": \"app.bsky.graph.starterpack\",\"rkey\": \"" + rkey + "\"}"
+
+	_, err = SendPost(url, payload, accessJwt)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("Deleted starter pack successfully")
+	return "Deleted starter pack successfully", nil
+}
+
+func DeleteList(rkey string, accessJwt string, endpoint string) (string, error) {
+	fmt.Println("Deleting list with rkey " + rkey)
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return "", err
+	}
+
+	url := endpoint + "/xrpc/com.atproto.repo.applyWrites"
+
+	payload := "{\"repo\": \"" + bskyDid + "\",\"writes\": [{\"$type\": \"com.atproto.repo.applyWrites#delete\",\"collection\": \"app.bsky.graph.list\",\"rkey\": \"" + rkey + "\"}]}"
+
+	_, err = SendPost(url, payload, accessJwt)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("Deleted list successfully")
+	return "Deleted list successfully", nil
+}
+
+func SendPost(url string, payload string, accessJwt string) (*http.Response, error) {
+	fmt.Println("Sending POST request to " + url)
+	fmt.Println("Payload: " + payload)
+	request, err := http.NewRequest("POST", url, strings.NewReader(payload))
+	if err != nil {
+		fmt.Println("Error creating POST request: " + err.Error())
+		return nil, err
+	}
+
+	if accessJwt != "" {
+		request.Header.Add("Authorization", "Bearer "+accessJwt)
+	}
+	request.Header.Add("Content-Type", "application/json")
+
+	resp, err := spinhttp.Send(request)
+	if err != nil {
+		fmt.Println("Error sending POST request: " + err.Error())
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("The POST request returned status code " + string(resp.StatusCode))
+		return nil, fmt.Errorf("The POST request returned %d", resp.StatusCode)
+	}
+	return resp, nil
+}
+
+func SendGet(url string, accessJwt string) (*http.Response, error) {
+	fmt.Println("Sending GET request to " + url)
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating GET request: " + err.Error())
+		return nil, err
+	}
+
+	if accessJwt != "" {
+		request.Header.Add("Authorization", "Bearer "+accessJwt)
+	}
+
+	resp, err := spinhttp.Send(request)
+
+	if err != nil {
+		fmt.Println("Error sending GET request: " + err.Error())
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("The GET request returned status code " + string(resp.StatusCode))
+		return nil, fmt.Errorf("The GET request returned %d", resp.StatusCode)
+	}
+
+	return resp, nil
+}
