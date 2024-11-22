@@ -40,7 +40,18 @@
         <p>&nbsp;</p>
         <button class="btn btn-lg btn-primary btn-block" onclick="validate()">Verify</button>
         <div class="messageContainer" id="messageContainer"></div>
-        <p class="left">Please note that in order to validate continuously whether the verification is still OK, we
+        <p class="left">This little tool works by checking first whether the Bluesky handle that you enter is a valid one and
+            then whether the verification ID that you enter is valid for the selected source. Last it checks whether the Bluesky
+            handle appears on the selected source with that ID. If all is valid, you will be added to the appropriate Bluesky
+            starter packs and lists that correspond to the selected source. The idea is that you own the site on the selected
+            source or at least control the content, so if there is a link to the given Bluesky handle there, it means that you
+            are the owner of the site and the Bluesky handle. If anyone trusts the source, then they can also trust that it is
+            you on Bluesky.
+            <br>&nbsp;<br>
+            As a positive side effect, we get a nice collection of Starter Packs and lists fo those sources with only verified
+            members.
+            <br>&nbsp;<br>
+            Please note that in order to validate continuously whether the verification is still OK, we
             store your
             Bluesky handle and the verification ID in our backend. We will never share that data with anyone, but if you
             don't want the combination of you Bluesky handle and the verification ID to be stored with us, please don't
