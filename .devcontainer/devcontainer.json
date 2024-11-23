@@ -13,7 +13,8 @@
 			"extensions": [
 				"humao.rest-client",
 				"tamasfe.even-better-toml",
-				"eamodio.gitlens"
+				"eamodio.gitlens",
+				"github.vscode-github-actions"
 			]
 		}
 	}
