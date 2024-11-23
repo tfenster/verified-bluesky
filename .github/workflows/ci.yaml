@@ -1,0 +1,30 @@
+name: "CI"
+on:
+  push:
+    branches:
+      - "main"
+env:
+  GO_VERSION: "1.23.2"
+  TINYGO_VERSION: "0.33.0"
+  SPIN_VERSION: ""
+jobs:
+  spin:
+    runs-on: "ubuntu-latest"
+    name: Build Spin App
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "${{ env.GO_VERSION }}"
+      - name: Install TinyGo
+        uses: rajatjindal/setup-actions/tinygo@v0.0.1
+        with:
+          version: "${{ env.TINYGO_VERSION }}"
+      - name: Install Spin
+        uses: fermyon/actions/spin/setup@v1
+        with:
+          plugins: 
+      - name: Build verified-bluesky
+        run: spin build
+        working-directory: .
