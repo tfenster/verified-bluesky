@@ -17,6 +17,11 @@ type Naming struct {
 	FirstAndSecondLevel map[TitleAndDescription][]TitleAndDescription
 }
 
+type FlatNaming struct {
+	Title	   string
+	FirstAndSecondLevel map[string][]string
+}
+
 func SetupNamingStructure(moduleKey string, moduleName string, moduleNameShortened string, firstAndSecondLevel map[string][]string, level1TranslationMap map[string]string, level2TranslationMap map[string]string) (Naming, error) {
 	title := "Verified " + moduleNameShortened
 	titleShortened := "Ver. " + moduleNameShortened
@@ -72,5 +77,24 @@ func SetupNamingStructure(moduleKey string, moduleName string, moduleNameShorten
 		TitleShortened:      titleShortened,
 		Description:         description,
 		FirstAndSecondLevel: firstAndSecondLevelTitleAndDesc,
+	}, nil
+}
+
+func SetupFlatNamingStructure(moduleKey string, moduleName string, moduleNameShortened string, firstAndSecondLevel map[string][]string, level1TranslationMap map[string]string, level2TranslationMap map[string]string) (FlatNaming, error) {
+	naming, err := SetupNamingStructure(moduleKey, moduleName, moduleNameShortened, firstAndSecondLevel, level1TranslationMap, level2TranslationMap)
+	if err != nil {
+		return FlatNaming{}, err
+	}
+	flatFirstAndSecondLevel := map[string][]string{}
+	for first, secondArray := range naming.FirstAndSecondLevel {
+		flatFirstAndSecondLevel[first.Title] = make([]string, len(secondArray))
+		for i, second := range secondArray {
+			flatFirstAndSecondLevel[first.Title][i] = second.Title
+		}
+	}
+
+	return FlatNaming{
+		Title: naming.Title,
+		FirstAndSecondLevel: flatFirstAndSecondLevel,
 	}, nil
 }

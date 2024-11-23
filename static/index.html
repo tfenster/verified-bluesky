@@ -20,7 +20,10 @@
         <h1 class="h3 mb-3 font-weight-normal">&nbsp;<br>Enter your Bluesky handle, select the verification
             source and enter your ID there</h1>
         <label for="inputBlueSkyHandle" class="sr-only">Bluesky handle</label>
-        <input type="text" id="inputBlueSkyHandle" class="form-control" placeholder="Bluesky handle" required autofocus>
+        <div class="input-group">
+            <div class="input-group-text">@</div>
+            <input type="text" id="inputBlueSkyHandle" class="form-control" placeholder="Bluesky handle" required autofocus>
+        </div>
         <div class="left"><small class="text-muted">This is your handle on Bluesky. If you open your profile, you see it
                 below your name,
                 after the @.</small></div>
@@ -41,7 +44,10 @@
         <p>&nbsp;</p>
         <button class="btn btn-lg btn-primary btn-block" onclick="validate()" id="verifyButton">Verify</button>
         <div class="messageContainer" id="messageContainer"></div>
-        <p class="left">This little tool works by checking first whether the Bluesky handle that you enter is a valid one and
+        <p class="left"><a href="overview.html">Here</a> you can find all Starter Packs and lists with verified Bluesky users
+            created with this tool.
+            <br>&nbsp;<br>
+            This little tool works by checking first whether the Bluesky handle that you enter is a valid one and
             then whether the verification ID that you enter is valid for the selected source. Last it checks whether the Bluesky
             handle appears on the selected source with that ID. If all is valid, you will be added to the appropriate Bluesky
             starter packs and lists that correspond to the selected source. The idea is that you own the site on the selected
@@ -100,7 +106,7 @@
                 const messageContainer = document.getElementById("messageContainer");
                 var links = "";
                 addedElements.forEach(element => {
-                    links = links + `<li><a href="${element.url}" target="_blank">${element.titel}</a></li>`;
+                    links = links + `<li><a href="${element.url}" target="_blank">${element.title}</a></li>`;
                 });
                 message = `
                     Successfully verified you! You are now part of the following on Bluesky:<br>

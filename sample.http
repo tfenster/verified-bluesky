@@ -32,6 +32,12 @@ PUT http://localhost:3000/validate-mvp/
 DELETE http://localhost:3000/validate-mvp/
 
 ###
+GET http://localhost:3000/validate-mvp/
+
+###
+GET http://localhost:3000/validate-mvp/Verified MVPs: AI Platform
+
+###
 GET https://mavenapi-prod.azurewebsites.net/api/mvp/UserProfiles/public/5538c444-ef18-eb11-a813-000d3a8dfe0d
 
 ###

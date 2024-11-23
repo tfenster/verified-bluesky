@@ -11,6 +11,7 @@ import (
 	"github.com/shared"
 
 	spinhttp "github.com/fermyon/spin/sdk/go/v2/http"
+	"github.com/fermyon/spin/sdk/go/v2/variables"
 )
 
 type UserProfile struct {
@@ -219,6 +220,78 @@ func init() {
 
 	spinhttp.Handle(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
+
+		case http.MethodGet:
+			lastSlash := strings.LastIndex(r.URL.Path, "/")
+			if lastSlash > 0 {
+				title := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
+				if title != "" {
+					fmt.Println("Getting Starter Pack and List for " + title)
+					accessJwt, endpoint, err := shared.LoginToBsky()
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusUnauthorized)
+					}
+
+					bskyHandle, err := variables.Get("bsky_handle")
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusUnauthorized)
+					}
+					
+					matchingList := shared.ListOrStarterPackWithUrl{}
+					allLists, err := shared.GetLists(accessJwt, endpoint)
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					for _, l := range allLists {
+						if l.Name == title {
+							matchingList = shared.ConvertToStruct(l.URI, title, "list", bskyHandle)
+							break
+						}
+					}
+
+					matchingStarterPacks := []shared.ListOrStarterPackWithUrl{}
+					allStarterPacks, err := shared.GetStarterPacks(accessJwt, endpoint)
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					for _, sp := range allStarterPacks {
+						if sp.Record.Name == title {
+							matchingStarterPacks = append(matchingStarterPacks, shared.ConvertToStruct(sp.URI, title, "sp", bskyHandle))
+						}
+					}
+
+					jsonResult, err := json.Marshal(shared.ListAndStarterPacks{List: matchingList, StarterPacks: matchingStarterPacks})
+					if err != nil {
+						http.Error(w, "Error encoding result to JSON: "+err.Error(), http.StatusInternalServerError)
+						return
+					}
+
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusOK)
+
+					fmt.Fprintln(w, string(jsonResult))
+					return
+				}
+			}
+			fmt.Println("Getting all Starter Packs and Lists")
+			naming, err := shared.SetupFlatNamingStructure(moduleKey, moduleName, moduleNameShortened, mvpAwardsAndTechnologyFocusAreas, mvpAwardTranslationMap, mvpTechFocusTranslationMap)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			jsonResult, err := json.Marshal(naming)
+			if err != nil {
+				http.Error(w, "Error encoding result to JSON: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+
+			fmt.Fprintln(w, string(jsonResult))
 
 		case http.MethodPost:
 			// get request body

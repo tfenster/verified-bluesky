@@ -82,15 +82,20 @@ type ProfileResponse struct {
 	DisplayName string `json:"displayName"`
 }
 
-type AddedListOrStarterPack struct {
+type ListOrStarterPackWithUrl struct {
 	URL   string `json:"url"`
-	Titel string `json:"titel"`
+	Title string `json:"title"`
 }
 
-func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle string, bskyDid string, accessJwt string, endpoint string) ([]AddedListOrStarterPack, error) {
+type ListAndStarterPacks struct {
+	List        ListOrStarterPackWithUrl        `json:"list"`
+	StarterPacks []ListOrStarterPackWithUrl `json:"starterPacks"`
+}
+
+func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle string, bskyDid string, accessJwt string, endpoint string) ([]ListOrStarterPackWithUrl, error) {
 	store, err := kv.OpenStore("default")
 	if err != nil {
-		return []AddedListOrStarterPack{}, err
+		return []ListOrStarterPackWithUrl{}, err
 	}
 	defer store.Close()
 
@@ -98,60 +103,60 @@ func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle st
 
 	err = store.Set(key, []byte(bskyHandle))
 	if err != nil {
-		return []AddedListOrStarterPack{}, err
+		return []ListOrStarterPackWithUrl{}, err
 	}
 
 	starterPacks, err := GetStarterPacks(accessJwt, endpoint)
 	if err != nil {
-		return []AddedListOrStarterPack{}, err
+		return []ListOrStarterPackWithUrl{}, err
 	}
 
 	lists, err := GetLists(accessJwt, endpoint)
 	if err != nil {
-		return []AddedListOrStarterPack{}, err
+		return []ListOrStarterPackWithUrl{}, err
 	}
 
-	addedToElements := make([]AddedListOrStarterPack, 0)
+	addedToElements := make([]ListOrStarterPackWithUrl, 0)
 	bskyHandleOwner, err := variables.Get("bsky_handle")
 	if err != nil {
-		return []AddedListOrStarterPack{}, err
+		return []ListOrStarterPackWithUrl{}, err
 	}
 
 	starterPack, err := AddUserToStarterPack(bskyHandle, bskyDid, naming.Title, naming.Description, starterPacks, accessJwt, endpoint)
 	if err != nil {
-		return []AddedListOrStarterPack{}, err
+		return []ListOrStarterPackWithUrl{}, err
 	}
 	addedToElements = append(addedToElements, ConvertToStruct(starterPack, naming.Title, "sp", bskyHandleOwner))
 
 	list, err := AddUserToList(bskyDid, naming.Title, lists, accessJwt, endpoint)
 	if err != nil {
-		return []AddedListOrStarterPack{}, err
+		return []ListOrStarterPackWithUrl{}, err
 	}
 	addedToElements = append(addedToElements, ConvertToStruct(list, naming.Title, "list", bskyHandleOwner))
 
 	for first, secondArray := range naming.FirstAndSecondLevel {
 		starterPack, err = AddUserToStarterPack(bskyHandle, bskyDid, first.Title, first.Description, starterPacks, accessJwt, endpoint)
 		if err != nil {
-			return []AddedListOrStarterPack{}, err
+			return []ListOrStarterPackWithUrl{}, err
 		}
 		addedToElements = append(addedToElements, ConvertToStruct(starterPack, first.Title, "sp", bskyHandleOwner))
 
 		list, err = AddUserToList(bskyDid, first.Title, lists, accessJwt, endpoint)
 		if err != nil {
-			return []AddedListOrStarterPack{}, err
+			return []ListOrStarterPackWithUrl{}, err
 		}
 		addedToElements = append(addedToElements, ConvertToStruct(list, first.Title, "list", bskyHandleOwner))
 
 		for _, second := range secondArray {
 			starterPack, err = AddUserToStarterPack(bskyHandle, bskyDid, second.Title, second.Description, starterPacks, accessJwt, endpoint)
 			if err != nil {
-				return []AddedListOrStarterPack{}, err
+				return []ListOrStarterPackWithUrl{}, err
 			}
 			addedToElements = append(addedToElements, ConvertToStruct(starterPack, second.Title, "sp", bskyHandleOwner))
 
 			list, err = AddUserToList(bskyDid, second.Title, lists, accessJwt, endpoint)
 			if err != nil {
-				return []AddedListOrStarterPack{}, err
+				return []ListOrStarterPackWithUrl{}, err
 			}
 			addedToElements = append(addedToElements, ConvertToStruct(list, second.Title, "list", bskyHandleOwner))
 		}
@@ -160,12 +165,12 @@ func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle st
 	return addedToElements, nil
 }
 
-func ConvertToStruct(uri string, title string, listOrStarterPack string, bskyHandle string) AddedListOrStarterPack {
+func ConvertToStruct(uri string, title string, listOrStarterPack string, bskyHandle string) ListOrStarterPackWithUrl {
 	ref := uri[strings.LastIndex(uri, "/")+1:]
 	if listOrStarterPack == "sp" {
-		return AddedListOrStarterPack{URL: "https://bsky.app/starter-pack/" + bskyHandle + "/" + ref, Titel: "Starter pack " + title}
+		return ListOrStarterPackWithUrl{URL: "https://bsky.app/starter-pack/" + bskyHandle + "/" + ref, Title: "Starter pack " + title}
 	} else {
-		return AddedListOrStarterPack{URL: "https://bsky.app/profile/" + bskyHandle + "/lists/" + ref, Titel: "List " + title}
+		return ListOrStarterPackWithUrl{URL: "https://bsky.app/profile/" + bskyHandle + "/lists/" + ref, Title: "List " + title}
 	}
 }
 
