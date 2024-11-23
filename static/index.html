@@ -39,7 +39,7 @@
                 after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on
                 your MVP profile (use "Other" as type).</small></div>
         <p>&nbsp;</p>
-        <button class="btn btn-lg btn-primary btn-block" onclick="validate()">Verify</button>
+        <button class="btn btn-lg btn-primary btn-block" onclick="validate()" id="verifyButton">Verify</button>
         <div class="messageContainer" id="messageContainer"></div>
         <p class="left">This little tool works by checking first whether the Bluesky handle that you enter is a valid one and
             then whether the verification ID that you enter is valid for the selected source. Last it checks whether the Bluesky
@@ -82,6 +82,7 @@
             if (bskyHandle === "" || verificationId === "") {
                 return;
             }
+            document.getElementById("verifyButton").innerText = "Verifying...";
             const url = "/validate-mvp";
             try {
                 const response = await fetch(url, {
@@ -101,24 +102,33 @@
                 addedElements.forEach(element => {
                     links = links + `<li><a href="${element.url}" target="_blank">${element.titel}</a></li>`;
                 });
-                messageContainer.innerHTML = `
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        Successfully verified you! You are now part of the following on Bluesky:<br>
-                        <ul>
-                        ${links}
-                        </ul>
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    </div>
+                message = `
+                    Successfully verified you! You are now part of the following on Bluesky:<br>
+                    <ul>
+                    ${links}
+                    </ul>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 `;
+                showSuccess(message);
             } catch (error) {
                 console.error(error.message);
                 showAlert(error.message);
             }
+            document.getElementById("verifyButton").innerText = "Verify";
         }
         function showAlert(message) {
             const messageContainer = document.getElementById("messageContainer");
             messageContainer.innerHTML = `
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+        `;
+        }
+        function showSuccess(message) {
+            const messageContainer = document.getElementById("messageContainer")
+            messageContainer.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
                 ${message}
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
