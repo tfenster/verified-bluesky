@@ -41,9 +41,13 @@ type Record struct {
 	CreatedAt   string `json:"createdAt"`
 }
 
-type ListResponse struct {
+type ListsResponse struct {
 	Lists  []List `json:"lists"`
 	Cursor string `json:"cursor"`
+}
+
+type ListResponse struct {
+	List List `json:"list"`
 }
 
 type List struct {
@@ -276,7 +280,25 @@ func AddUserToStarterPack(bskyHandle string, bskyDid string, starterPackTitle st
 			starterPackListUri = sp.Record.List
 			starterPackDescription = sp.Record.Description
 			createdAt = sp.Record.CreatedAt
-			fmt.Println("Found existing starter pack with title " + starterPackTitle)
+			list, err := GetList(starterPackListUri, accessJwt, endpoint)
+			if err != nil {
+				return "", err
+			}
+
+			if list.ListItemCount >= 150 {
+				fmt.Println("Starter pack list is full, creating a new one")
+				timestamp := time.Now().Format("2006-01-02T15:04:05.000Z")
+				newListResponse, newStarterPackResponse, err := CreateStarterPack(starterPackTitle, starterPackDescription, timestamp, accessJwt, endpoint)
+				if err != nil {
+					return "", err
+				}
+				starterPackListUri = newListResponse.URI
+				starterPackUri = newStarterPackResponse.URI
+				createdAt = timestamp
+				fmt.Println("Created new list and starter pack")
+			} else {
+				fmt.Println("Found existing starter pack with title " + starterPackTitle + " and space left")
+			}
 			break
 		}
 	}
@@ -414,6 +436,24 @@ func CheckIfListExists(listTitle string, lists []List) bool {
 	return false
 }
 
+func GetList(listUri string, accessJwt string, endpoint string) (List, error) {
+	fmt.Println("Getting list for URI " + listUri)
+	url := endpoint + "/xrpc/app.bsky.graph.getList?list=" + listUri
+	resp, err := SendGet(url, accessJwt)
+	if err != nil {
+		return List{}, err
+	}
+
+	var response ListResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return List{}, err
+	}
+
+	fmt.Println("Got list successfully")
+	return response.List, nil
+}
+
 func GetLists(accessJwt string, endpoint string) ([]List, error) {
 	bskyDid, err := variables.Get("bsky_did")
 	if err != nil {
@@ -432,7 +472,7 @@ func GetLists(accessJwt string, endpoint string) ([]List, error) {
 			return []List{}, err
 		}
 
-		var response ListResponse
+		var response ListsResponse
 		err = json.NewDecoder(resp.Body).Decode(&response)
 		if err != nil {
 			return []List{}, err
