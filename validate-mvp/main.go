@@ -235,6 +235,7 @@ func init() {
 				http.Error(w, "Error decoding body JSON: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
+			mvpValidationRequest.BskyHandle = strings.ToLower(mvpValidationRequest.BskyHandle)
 
 			// get MVP profile
 			fmt.Println("Validating MVP with ID: " + mvpValidationRequest.MvpId)
