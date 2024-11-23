@@ -12,7 +12,8 @@
 		"vscode": {
 			"extensions": [
 				"humao.rest-client",
-				"tamasfe.even-better-toml"
+				"tamasfe.even-better-toml",
+				"eamodio.gitlens"
 			]
 		}
 	}
