@@ -5,7 +5,7 @@ on:
       - "main"
 env:
   GO_VERSION: "1.23.2"
-  TINYGO_VERSION: "v0.33.0"
+  TINYGO_VERSION: "v0.34.0"
   SPIN_VERSION: ""
 jobs:
   spin:
