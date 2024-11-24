@@ -1,9 +1,9 @@
-POST http://localhost:3000/validate-mvp
+POST http://localhost:3000/validate-rd
 Content-Type: text/plain
 
 {
     "bskyHandle": "tobiasfenster.io",
-    "mvpId": "2efc9bb2-6a8c-e711-811e-3863bb36edf8"
+    "verificationId": "2efc9bb2-6a8c-e711-811e-3863bb36edf8"
 }
 
 ###
@@ -22,20 +22,26 @@ Content-Type: application/json
 
 {
     "bskyHandle": "kevchant.bsky.social",
-    "mvpId": "5538c444-ef18-eb11-a813-000d3a8dfe0d"
+    "verificationId": "5538c444-ef18-eb11-a813-000d3a8dfe0d"
 }
 
 ###
-PUT http://localhost:3000/validate-mvp/
+PUT http://localhost:3000/validate-rd/
 
 ###
-DELETE http://localhost:3000/validate-mvp/
+DELETE http://localhost:3000/admin/
 
 ###
 GET http://localhost:3000/validate-mvp/
 
 ###
+GET http://localhost:3000/validate-rd/
+
+###
 GET http://localhost:3000/validate-mvp/Verified MVPs: AI Platform
+
+###
+GET http://localhost:3000/validate-rd/Verified MVPs
 
 ###
 GET https://mavenapi-prod.azurewebsites.net/api/mvp/UserProfiles/public/5538c444-ef18-eb11-a813-000d3a8dfe0d
