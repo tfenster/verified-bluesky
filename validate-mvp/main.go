@@ -63,7 +63,7 @@ func init() {
 			"High Availability",
 			"Hyper-V",
 			"Linux on Hyper-V",
-			"On-premises and Hybrid AKS",
+			"On-premises and Hybrid AKS, Container Management",
 			"Container Management",
 			"On-Premises Networking",
 			"On-Premises Storage",
@@ -179,6 +179,7 @@ func init() {
 	mvpTechFocusTranslationMap := map[string]string{
 		"Azure Machine Learning Studio":                       "Azure ML Studio",
 		"Datacenter Management (Group Policy, System Center)": "Datacenter Management",
+		"On-premises and Hybrid AKS, Container Management":    "On-prem. & Hybrid AKS, Containers",
 		"Enterprise and Platform Security":                    "Enterpr. & Platf. Security",
 		"Azure Arc (Arc SQL Server, Arc SQL MI)":              "Azure Arc",
 		"Azure Database for MySQL":                            "Azure DB for MySQL",
