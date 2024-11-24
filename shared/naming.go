@@ -4,6 +4,11 @@ import (
 	"errors"
 )
 
+type ValidationRequest struct {
+	BskyHandle string `json:"bskyHandle"`
+	VerificationId       string `json:"verificationId"`
+}
+
 type TitleAndDescription struct {
 	Title       string
 	Description string

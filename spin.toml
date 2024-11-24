@@ -10,6 +10,28 @@ description = "Backend and frontend for Bluesky account verification and storage
 bsky_handle = { required = true }
 bsky_password = { required = true }
 bsky_did = { required = true }
+admin_mode = { default = "false" }
+
+[[trigger.http]]
+route = "/admin/..."
+component = "admin"
+
+[component.admin]
+source = "admin/main.wasm"
+allowed_outbound_hosts = [
+    "https://bsky.social",
+    "https://*.bsky.network",
+]
+key_value_stores = ["default"]
+[component.admin.variables]
+bsky_handle = "{{ bsky_handle }}"
+bsky_password = "{{ bsky_password }}"
+bsky_did = "{{ bsky_did }}"
+admin_mode = "{{ admin_mode }}"
+[component.admin.build]
+command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
+workdir = "admin"
+watch = ["**/*.go", "go.mod"]
 
 [[trigger.http]]
 route = "/validate-mvp/..."
@@ -30,6 +52,27 @@ bsky_did = "{{ bsky_did }}"
 [component.validate-mvp.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-mvp"
+watch = ["**/*.go", "go.mod"]
+
+[[trigger.http]]
+route = "/validate-rd/..."
+component = "validate-rd"
+
+[component.validate-rd]
+source = "validate-rd/main.wasm"
+allowed_outbound_hosts = [
+    "https://bsky.social",
+    "https://mavenapi-prod.azurewebsites.net",
+    "https://*.bsky.network",
+]
+key_value_stores = ["default"]
+[component.validate-rd.variables]
+bsky_handle = "{{ bsky_handle }}"
+bsky_password = "{{ bsky_password }}"
+bsky_did = "{{ bsky_did }}"
+[component.validate-rd.build]
+command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
+workdir = "validate-rd"
 watch = ["**/*.go", "go.mod"]
 
 [[trigger.http]]

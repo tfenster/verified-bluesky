@@ -11,7 +11,6 @@ import (
 	"github.com/shared"
 
 	spinhttp "github.com/fermyon/spin/sdk/go/v2/http"
-	"github.com/fermyon/spin/sdk/go/v2/variables"
 )
 
 type UserProfile struct {
@@ -31,11 +30,6 @@ type SocialNetwork struct {
 
 type Response struct {
 	UserProfile UserProfile `json:"userProfile"`
-}
-
-type MvpValidationRequest struct {
-	BskyHandle string `json:"bskyHandle"`
-	MvpId      string `json:"mvpId"`
 }
 
 func init() {
@@ -227,72 +221,34 @@ func init() {
 			if lastSlash > 0 {
 				title := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
 				if title != "" {
+					if (title == "verificationText") {
+						w.Header().Set("Content-Type", "text/plain")
+						w.WriteHeader(http.StatusOK)
+						fmt.Fprintln(w, "This is your MVP ID, a GUID. If you open your profile on <a href=\"https://mvp.microsoft.com\" target=\"_blank\">mvp.microsoft.com</a>, it is the last part of the URL, after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on your MVP profile (use \"Other\" as type).</small></div>")
+						return
+					}
 					fmt.Println("Getting Starter Pack and List for " + title)
 					accessJwt, endpoint, err := shared.LoginToBsky()
 					if err != nil {
 						http.Error(w, err.Error(), http.StatusUnauthorized)
 					}
-
-					bskyHandle, err := variables.Get("bsky_handle")
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusUnauthorized)
-					}
-					
-					matchingList := shared.ListOrStarterPackWithUrl{}
-					allLists, err := shared.GetLists(accessJwt, endpoint)
+					err = shared.RespondWithStarterPacksAndListsForTitle(title, w, accessJwt, endpoint)
 					if err != nil {
 						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
 					}
-					for _, l := range allLists {
-						if l.Name == title {
-							matchingList = shared.ConvertToStruct(l.URI, title, "list", bskyHandle)
-							break
-						}
-					}
-
-					matchingStarterPacks := []shared.ListOrStarterPackWithUrl{}
-					allStarterPacks, err := shared.GetStarterPacks(accessJwt, endpoint)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					for _, sp := range allStarterPacks {
-						if sp.Record.Name == title {
-							matchingStarterPacks = append(matchingStarterPacks, shared.ConvertToStruct(sp.URI, title, "sp", bskyHandle))
-						}
-					}
-
-					jsonResult, err := json.Marshal(shared.ListAndStarterPacks{List: matchingList, StarterPacks: matchingStarterPacks})
-					if err != nil {
-						http.Error(w, "Error encoding result to JSON: "+err.Error(), http.StatusInternalServerError)
-						return
-					}
-
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusOK)
-
-					fmt.Fprintln(w, string(jsonResult))
 					return
 				}
 			}
 			fmt.Println("Getting all Starter Packs and Lists")
-			naming, err := shared.SetupFlatNamingStructure(moduleKey, moduleName, moduleNameShortened, mvpAwardsAndTechnologyFocusAreas, mvpAwardTranslationMap, mvpTechFocusTranslationMap)
+			accessJwt, endpoint, err := shared.LoginToBsky()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+			}
+			err = shared.RespondWithAllStarterPacksAndListsForModule(moduleKey, moduleName, moduleNameShortened, mvpAwardsAndTechnologyFocusAreas, mvpAwardTranslationMap, mvpTechFocusTranslationMap, w, accessJwt, endpoint)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-
-			jsonResult, err := json.Marshal(naming)
-			if err != nil {
-				http.Error(w, "Error encoding result to JSON: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-
-			fmt.Fprintln(w, string(jsonResult))
 
 		case http.MethodPost:
 			// get request body
@@ -303,7 +259,7 @@ func init() {
 			}
 			defer r.Body.Close()
 
-			var mvpValidationRequest MvpValidationRequest
+			var mvpValidationRequest shared.ValidationRequest
 			err = json.Unmarshal(body, &mvpValidationRequest)
 			if err != nil {
 				http.Error(w, "Error decoding body JSON: "+err.Error(), http.StatusInternalServerError)
@@ -312,13 +268,13 @@ func init() {
 			mvpValidationRequest.BskyHandle = strings.ToLower(mvpValidationRequest.BskyHandle)
 
 			// get MVP profile
-			fmt.Println("Validating MVP with ID: " + mvpValidationRequest.MvpId)
-			url := fmt.Sprintf("https://mavenapi-prod.azurewebsites.net/api/mvp/UserProfiles/public/%s", url.QueryEscape(mvpValidationRequest.MvpId))
+			fmt.Println("Validating MVP with ID: " + mvpValidationRequest.VerificationId)
+			url := fmt.Sprintf("https://mavenapi-prod.azurewebsites.net/api/mvp/UserProfiles/public/%s", url.QueryEscape(mvpValidationRequest.VerificationId))
 
 			resp, err := shared.SendGet(url, "")
 			if err != nil {
 				fmt.Println("Error fetching the URL: " + err.Error())
-				http.Error(w, "Error fetching the MVP profile: "+err.Error(), http.StatusInternalServerError)
+				http.Error(w, "Error fetching the MVP profile, probably caused by an invalid MVP ID: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 			defer resp.Body.Close()
@@ -336,7 +292,7 @@ func init() {
 				fmt.Print("Social network with handle '" + mvpValidationRequest.BskyHandle + "' found\n")
 			} else {
 				fmt.Print("Social network with handle '" + mvpValidationRequest.BskyHandle + "' not found\n")
-				http.Error(w, fmt.Sprintf("Link to social network with handle %s not found for MVP %s", mvpValidationRequest.BskyHandle, mvpValidationRequest.MvpId), http.StatusNotFound)
+				http.Error(w, fmt.Sprintf("Link to social network with handle %s not found for MVP %s", mvpValidationRequest.BskyHandle, mvpValidationRequest.VerificationId), http.StatusNotFound)
 				return
 			}
 
@@ -367,7 +323,7 @@ func init() {
 
 			// store MVP and add to bsky starter pack
 			fmt.Println("Storing MVP and adding to Bluesky starter pack")
-			result, err := shared.StoreAndAddToBskyStarterPack(naming, mvpValidationRequest.MvpId, mvpValidationRequest.BskyHandle, profile.DID, accessJwt, endpoint)
+			result, err := shared.StoreAndAddToBskyStarterPack(naming, mvpValidationRequest.VerificationId, mvpValidationRequest.BskyHandle, profile.DID, accessJwt, endpoint)
 
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -392,65 +348,10 @@ func init() {
 			}
 
 			fmt.Println("Setting up all Starter Packs and Lists")
-			naming, err := shared.SetupNamingStructure(moduleKey, moduleName, moduleNameShortened, mvpAwardsAndTechnologyFocusAreas, mvpAwardTranslationMap, mvpTechFocusTranslationMap)
+			err = shared.SetupAllStarterPacksAndLists(moduleKey, moduleName, moduleNameShortened, mvpAwardsAndTechnologyFocusAreas, mvpAwardTranslationMap, mvpTechFocusTranslationMap, w, accessJwt, endpoint)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
-			}
-
-			result, err := shared.CreateAllStarterPacksAndLists(naming, accessJwt, endpoint)
-
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			w.Header().Set("Content-Type", "text/plain")
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintln(w, result)
-
-		case http.MethodDelete:
-			accessJwt, endpoint, err := shared.LoginToBskyWithReq(r)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-			}
-
-			fmt.Println("Deleting all Starter Packs and Lists")
-
-			starterPacks, err := shared.GetStarterPacks(accessJwt, endpoint)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			for _, starterPack := range starterPacks {
-				listRkey := starterPack.Record.List[strings.LastIndex(starterPack.Record.List, "/")+1:]
-				_, err = shared.DeleteList(listRkey, accessJwt, endpoint)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				starterPackRkey := starterPack.URI[strings.LastIndex(starterPack.URI, "/")+1:]
-				_, err = shared.DeleteStarterPack(starterPackRkey, accessJwt, endpoint)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-			}
-
-			lists, err := shared.GetLists(accessJwt, endpoint)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			for _, list := range lists {
-				listRkey := list.URI[strings.LastIndex(list.URI, "/")+1:]
-				_, err = shared.DeleteList(listRkey, accessJwt, endpoint)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
 			}
 
 		default:

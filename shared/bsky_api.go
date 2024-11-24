@@ -275,43 +275,57 @@ func GetStarterPacks(accessJwt string, endpoint string) ([]StarterPack, error) {
 }
 
 func AddUserToStarterPack(bskyHandle string, bskyDid string, starterPackTitle string, starterPackDescription string, starterPacks []StarterPack, accessJwt string, endpoint string) (string, error) {
+	// FIXME users could now be added multiple times to starter packs if one is full, make sure that doesn't happen
 	fmt.Println("Adding users to the right starter pack (title: " + starterPackTitle + ", description: " + starterPackDescription + ")")
 	var starterPackUri string
 	var starterPackListUri string
 	var createdAt string
 	var err error
+	done := false
+	matchingStarterPacks := []StarterPack{}
 	for _, sp := range starterPacks {
 		if sp.Record.Name == starterPackTitle {
+			matchingStarterPacks = append(matchingStarterPacks, sp)
+		}
+	}
+	fmt.Println("Found " + fmt.Sprintf("%d", len(matchingStarterPacks)) + " matching starter packs")
+
+	if len(matchingStarterPacks) == 0 {
+		fmt.Println("No matching starter pack found with title: " + starterPackTitle)
+		return "", fmt.Errorf("No matching starter pack found with title: " + starterPackTitle)
+	}
+
+	for _, sp := range matchingStarterPacks {
+		list, err := GetList(sp.Record.List, accessJwt, endpoint)
+		if err != nil {
+			return "", err
+		}
+
+		fmt.Println("Found existing starter pack with title " + starterPackTitle + " and an item count of " + fmt.Sprintf("%d", list.ListItemCount))
+		if list.ListItemCount < 149 {
+			fmt.Println("Found existing starter pack with title " + starterPackTitle + " and space left")
 			starterPackUri = sp.URI
 			starterPackListUri = sp.Record.List
 			starterPackDescription = sp.Record.Description
 			createdAt = sp.Record.CreatedAt
-			list, err := GetList(starterPackListUri, accessJwt, endpoint)
-			if err != nil {
-				return "", err
-			}
-
-			if list.ListItemCount >= 150 {
-				fmt.Println("Starter pack list is full, creating a new one")
-				timestamp := time.Now().Format("2006-01-02T15:04:05.000Z")
-				newListResponse, newStarterPackResponse, err := CreateStarterPack(starterPackTitle, starterPackDescription, timestamp, accessJwt, endpoint)
-				if err != nil {
-					return "", err
-				}
-				starterPackListUri = newListResponse.URI
-				starterPackUri = newStarterPackResponse.URI
-				createdAt = timestamp
-				fmt.Println("Created new list and starter pack")
-			} else {
-				fmt.Println("Found existing starter pack with title " + starterPackTitle + " and space left")
-			}
-			break
+			done = true
+		} else {
+			fmt.Println("Found existing starter pack with title " + starterPackTitle + " but it's full")
 		}
 	}
 
-	if starterPackListUri == "" {
-		fmt.Println("No matching starter pack found with title: " + starterPackTitle)
-		return "", fmt.Errorf("No matching starter pack found with title: " + starterPackTitle)
+	// we found matching starter packs but none of them had space left
+	if !done {
+		fmt.Println("Starter pack list is full, creating a new one")
+		timestamp := time.Now().Format("2006-01-02T15:04:05.000Z")
+		newListResponse, newStarterPackResponse, err := CreateStarterPack(starterPackTitle, starterPackDescription, timestamp, accessJwt, endpoint)
+		if err != nil {
+			return "", err
+		}
+		starterPackListUri = newListResponse.URI
+		starterPackUri = newStarterPackResponse.URI
+		createdAt = timestamp
+		fmt.Println("Created new list and starter pack")
 	}
 
 	err = AddUserToStarterPackList(bskyDid, starterPackListUri, starterPackUri, starterPackTitle, starterPackDescription, createdAt, accessJwt, endpoint)
@@ -678,6 +692,86 @@ func Follow(toFollowDid string, accessJwt string, endpoint string) (string, erro
 	return "Followed user successfully", nil
 }
 
+func RespondWithStarterPacksAndListsForTitle(title string, w http.ResponseWriter, accessJwt string, endpoint string) error {
+	bskyHandle, err := variables.Get("bsky_handle")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+	}
+	
+	matchingList := ListOrStarterPackWithUrl{}
+	allLists, err := GetLists(accessJwt, endpoint)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	for _, l := range allLists {
+		if l.Name == title {
+			matchingList = ConvertToStruct(l.URI, title, "list", bskyHandle)
+			break
+		}
+	}
+
+	matchingStarterPacks := []ListOrStarterPackWithUrl{}
+	allStarterPacks, err := GetStarterPacks(accessJwt, endpoint)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	for _, sp := range allStarterPacks {
+		if sp.Record.Name == title {
+			matchingStarterPacks = append(matchingStarterPacks, ConvertToStruct(sp.URI, title, "sp", bskyHandle))
+		}
+	}
+
+	jsonResult, err := json.Marshal(ListAndStarterPacks{List: matchingList, StarterPacks: matchingStarterPacks})
+	if err != nil {
+		http.Error(w, "Error encoding result to JSON: "+err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, string(jsonResult))
+	return nil
+}
+
+func RespondWithAllStarterPacksAndListsForModule(moduleKey string, moduleName string, moduleNameShortened string, firstAndSecondLevel map[string][]string, level1TranslationMap map[string]string, level2TranslationMap map[string]string, w http.ResponseWriter, accessJwt string, endpoint string) error {
+	naming, err := SetupFlatNamingStructure(moduleKey, moduleName, moduleNameShortened, firstAndSecondLevel, level1TranslationMap, level2TranslationMap)
+	if err != nil {
+		return err
+	}
+
+	jsonResult, err := json.Marshal(naming)
+	if err != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, string(jsonResult))
+	return nil
+}
+
+func SetupAllStarterPacksAndLists(moduleKey string, moduleName string, moduleNameShortened string, firstAndSecondLevel map[string][]string, level1TranslationMap map[string]string, level2TranslationMap map[string]string, w http.ResponseWriter, accessJwt string, endpoint string) error {
+	naming, err := SetupNamingStructure(moduleKey, moduleName, moduleNameShortened, firstAndSecondLevel, level1TranslationMap, level2TranslationMap)
+	if err != nil {
+		return err
+	}
+
+	result, err := CreateAllStarterPacksAndLists(naming, accessJwt, endpoint)
+
+	if err != nil {
+		return err
+	}
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, result)
+	return nil
+}
+
 func SendPost(url string, payload string, accessJwt string) (*http.Response, error) {
 	fmt.Println("Sending POST request to " + url)
 	// check if url constains login
@@ -703,7 +797,7 @@ func SendPost(url string, payload string, accessJwt string) (*http.Response, err
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("The POST request returned status code " + string(resp.StatusCode))
+		fmt.Println(fmt.Sprintf("The POST request returned status code %d", resp.StatusCode))
 		return nil, fmt.Errorf("The POST request returned %d", resp.StatusCode)
 	}
 	return resp, nil
@@ -729,7 +823,7 @@ func SendGet(url string, accessJwt string) (*http.Response, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("The GET request returned status code " + string(resp.StatusCode))
+		fmt.Println(fmt.Sprintf("The GET request returned status code %d", resp.StatusCode))
 		return nil, fmt.Errorf("The GET request returned %d", resp.StatusCode)
 	}
 

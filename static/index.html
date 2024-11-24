@@ -28,9 +28,9 @@
                 below your name,
                 after the @.</small></div>
         <label for="selectVerificationSource" class="sr-only">Verification source</label>
-        <select class="form-select form-control" id="selectSource">
+        <select class="form-select form-control" id="selectSource" onchange="updateVerification()">
             <option value="mvp">Microsoft Most Valuable Professional</option>
-            <option value="rd">Microsoft Regional Directors (not implemented yet)</option>
+            <option value="rd">Microsoft Regional Directors</option>
             <option value="captain">Docker Captains (not implemented yet)</option>
         </select>
         <div class="left"><small class="text-muted">Select the source for verifying you.</small></div>
@@ -77,10 +77,23 @@
     </form>
 
     <script>
-        function updateVerification() {
-            var select = document.getElementById("mvpAwards");
+        async function updateVerification() {
+            var select = document.getElementById("selectSource");
             var selectedValue = select.options[select.selectedIndex].value;
-            document.getElementById("selectedAward").innerText = selectedValue;
+            const url = "/validate-" + selectedValue + "/verificationText";
+            try {
+                const response = await fetch(url, {
+                    method: "GET"
+                });
+                if (!response.ok) {
+                    throw new Error(`An error occured: ${await response.text()}`);
+                }
+                const verificationText = await response.text();
+                document.getElementById("explanationText").innerHTML = verificationText;
+            } catch (error) {
+                console.error(error.message);
+                showAlert(error.message);
+            }
         }
         async function validate() {
             bskyHandle = document.getElementById("inputBlueSkyHandle").value;
@@ -89,14 +102,16 @@
                 return;
             }
             document.getElementById("verifyButton").innerText = "Verifying...";
-            const url = "/validate-mvp";
+            var select = document.getElementById("selectSource");
+            var selectedValue = select.options[select.selectedIndex].value;
+            const url = "/validate-" + selectedValue;
             try {
                 const response = await fetch(url, {
                     method: "POST",
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ bskyHandle: bskyHandle, mvpId: verificationId }),
+                    body: JSON.stringify({ bskyHandle: bskyHandle, verificationId: verificationId }),
                 });
                 if (!response.ok) {
                     throw new Error(`An error occured: ${await response.text()}`);
