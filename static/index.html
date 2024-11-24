@@ -126,7 +126,8 @@
             const messageContainer = document.getElementById("messageContainer");
             messageContainer.innerHTML = `
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                ${message}
+                ${message}<br>
+                If you think this is a bug, please file an issue on <a href="https://github.com/tfenster/verified-bluesky/issues" target="_blank">GitHub</a> or contact <a href="https://bsky.app/profile/verifiedsky.bsky.social" target="_blank">the "host account"</a> on Bluesky.
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
         `;
