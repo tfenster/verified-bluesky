@@ -652,6 +652,26 @@ func DeleteList(rkey string, accessJwt string, endpoint string) (string, error) 
 	return "Deleted list successfully", nil
 }
 
+func Follow(toFollowDid string, accessJwt string, endpoint string) (string, error) {
+	fmt.Println("Following user with DID " + toFollowDid)
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return "", err
+	}
+
+	url := endpoint + "/xrpc/com.atproto.repo.createRecord"
+
+	payload := "{\"collection\": \"app.bsky.graph.follow\",\"repo\": \"" + bskyDid + "\",\"record\": {\"subject\": \"" + toFollowDid + "\",\"createdAt\": \"" + time.Now().Format("2006-01-02T15:04:05.000Z") + "\",\"$type\": \"app.bsky.graph.follow\"}}"
+
+	_, err = SendPost(url, payload, accessJwt)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("Followed user successfully")
+	return "Followed user successfully", nil
+}
+
 func SendPost(url string, payload string, accessJwt string) (*http.Response, error) {
 	fmt.Println("Sending POST request to " + url)
 	fmt.Println("Payload: " + payload)
