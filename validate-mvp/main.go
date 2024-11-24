@@ -58,7 +58,6 @@ func init() {
 			"Hyper-V",
 			"Linux on Hyper-V",
 			"On-premises and Hybrid AKS, Container Management",
-			"Container Management",
 			"On-Premises Networking",
 			"On-Premises Storage",
 			"Windows Server",
