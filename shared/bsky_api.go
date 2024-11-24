@@ -166,6 +166,12 @@ func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle st
 		}
 	}
 
+	_, err = Follow(bskyDid, accessJwt, endpoint)
+	if err != nil {
+		// only print the error as this is not technically blocking the application usecase
+		fmt.Println("Error following user: " + err.Error())
+	}
+
 	return addedToElements, nil
 }
 
@@ -674,7 +680,12 @@ func Follow(toFollowDid string, accessJwt string, endpoint string) (string, erro
 
 func SendPost(url string, payload string, accessJwt string) (*http.Response, error) {
 	fmt.Println("Sending POST request to " + url)
-	fmt.Println("Payload: " + payload)
+	// check if url constains login
+	if strings.Contains(url, "createSession") {
+		fmt.Println("Not logging the payload for login")
+	} else {
+		fmt.Println("Payload: " + payload)
+	}
 	request, err := http.NewRequest("POST", url, strings.NewReader(payload))
 	if err != nil {
 		fmt.Println("Error creating POST request: " + err.Error())

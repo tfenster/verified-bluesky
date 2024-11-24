@@ -380,14 +380,6 @@ func init() {
 				return
 			}
 
-			// follow
-			fmt.Println("Following MVP" + profile.Handle)
-			_, err = shared.Follow(profile.DID, accessJwt, endpoint)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 
