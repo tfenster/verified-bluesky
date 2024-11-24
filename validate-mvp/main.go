@@ -144,7 +144,7 @@ func init() {
 			"PowerShell",
 		},
 		"Security": {
-			"Cloud Security (Microsoft Defender for Cloud)",
+			"Cloud Security (Microsoft Defender for Cloud, Azure network security products, GitHub Advanced Security)",
 			"Azure network security products",
 			"GitHub Advanced Security",
 			"Identity & Access",
@@ -207,7 +207,7 @@ func init() {
 		"Azure Networking":                                               "Networking",
 		"Azure Storage":                                                  "Storage",
 		"Azure Well-Architected, Resiliency & Observability":             "Well-Architected etc.",
-		"Cloud Security (Microsoft Defender for Cloud)":                  "Cloud Security",
+		"Cloud Security (Microsoft Defender for Cloud, Azure network security products, GitHub Advanced Security)":                  "Cloud Security",
 		"Azure network security products":                                "Azure net security",
 		"GitHub Advanced Security":                                       "GitHub Adv. Security",
 		"Microsoft Security Copilot":                                     "Microsoft Sec. Copilot",
