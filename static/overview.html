@@ -25,7 +25,7 @@
         <label for="selectVerificationSource" class="sr-only">Verification source</label>
         <select class="form-select form-control" id="selectSource">
             <option value="mvp">Microsoft Most Valuable Professional</option>
-            <option value="rd">Microsoft Regional Directors (not implemented yet)</option>
+            <option value="rd">Microsoft Regional Directors</option>
             <option value="captain">Docker Captains (not implemented yet)</option>
         </select>
         <div class="left"><small class="text-muted">Select the source of verification.</small></div>
@@ -75,7 +75,9 @@
             spinner.setAttribute("role", "status");
             modalBody.appendChild(spinner);
             listAndStarterPacksModal.show();
-            const url = "/validate-mvp/" + encodeURIComponent(origBskyTitle);
+            var select = document.getElementById("selectSource");
+            var selectedValue = select.options[select.selectedIndex].value;
+            const url = "/validate-" + selectedValue + "/" + encodeURIComponent(origBskyTitle);
             try {
                 const response = await fetch(url, {
                     method: "GET"
@@ -108,7 +110,9 @@
         }
         async function load() {
             document.getElementById("loadButton").innerText = "Loading...";
-            const url = "/validate-mvp";
+            var select = document.getElementById("selectSource");
+            var selectedValue = select.options[select.selectedIndex].value;
+            const url = "/validate-" + selectedValue;
             try {
                 const response = await fetch(url, {
                     method: "GET"
