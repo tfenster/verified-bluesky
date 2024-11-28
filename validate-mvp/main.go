@@ -322,7 +322,7 @@ func init() {
 
 			// store MVP and add to bsky starter pack
 			fmt.Println("Storing MVP and adding to Bluesky starter pack")
-			result, err := shared.StoreAndAddToBskyStarterPack(naming, mvpValidationRequest.VerificationId, mvpValidationRequest.BskyHandle, profile.DID, accessJwt, endpoint)
+			result, err := shared.StoreAndAddToBskyStarterPack(naming, mvpValidationRequest.VerificationId, mvpValidationRequest.BskyHandle, profile.DID, "ms-mvp", accessJwt, endpoint)
 
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)

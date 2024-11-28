@@ -143,7 +143,7 @@ func init() {
 
 			// store RD and add to bsky starter pack
 			fmt.Println("Storing RD and adding to Bluesky starter pack")
-			result, err := shared.StoreAndAddToBskyStarterPack(naming, rdValidationRequest.VerificationId, rdValidationRequest.BskyHandle, profile.DID, accessJwt, endpoint)
+			result, err := shared.StoreAndAddToBskyStarterPack(naming, rdValidationRequest.VerificationId, rdValidationRequest.BskyHandle, profile.DID, "ms-rd", accessJwt, endpoint)
 
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -29,7 +29,10 @@ Content-Type: application/json
 PUT http://localhost:3000/validate-rd/
 
 ###
-DELETE http://localhost:3000/admin/
+DELETE http://localhost:3000/admin/<pwd>
+
+###
+PUT http://localhost:3000/admin/<pwd>
 
 ###
 GET http://localhost:3000/validate-mvp/
