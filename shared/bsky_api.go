@@ -96,7 +96,7 @@ type ListAndStarterPacks struct {
 	StarterPacks []ListOrStarterPackWithUrl `json:"starterPacks"`
 }
 
-func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle string, bskyDid string, accessJwt string, endpoint string) ([]ListOrStarterPackWithUrl, error) {
+func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle string, bskyDid string, label string, accessJwt string, endpoint string) ([]ListOrStarterPackWithUrl, error) {
 	store, err := kv.OpenStore("default")
 	if err != nil {
 		return []ListOrStarterPackWithUrl{}, err
@@ -170,6 +170,12 @@ func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle st
 	if err != nil {
 		// only print the error as this is not technically blocking the application usecase
 		fmt.Println("Error following user: " + err.Error())
+	}
+
+	err = SetLabel(label, bskyHandle, accessJwt, endpoint)
+	if err != nil {
+		fmt.Println("Error setting label " + label + " on user: " + err.Error())
+		return []ListOrStarterPackWithUrl{}, fmt.Errorf("Error setting label " + label + " on user: " + err.Error())
 	}
 
 	return addedToElements, nil
@@ -772,7 +778,41 @@ func SetupAllStarterPacksAndLists(moduleKey string, moduleName string, moduleNam
 	return nil
 }
 
+func SetLabel(label string, targetHandle string, accessJwt string, endpoint string) error {
+	fmt.Println("Adding label " + label + " to handle " + targetHandle)
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return err
+	}
+
+	bskyLabelerDid, err := variables.Get("bsky_labeler_did")
+	if err != nil {
+		return err
+	}
+
+	targetProfile, err := GetProfile(targetHandle, accessJwt, endpoint)
+	if err != nil {
+		return err
+	}
+
+	url := endpoint + "/xrpc/tools.ozone.moderation.emitEvent"
+
+	payload := "{\"subject\": {\"$type\": \"com.atproto.admin.defs#repoRef\",\"did\": \"" + targetProfile.DID + "\"},\"createdBy\": \"" + bskyDid + "\",\"subjectBlobCids\": [],\"event\": {\"$type\": \"tools.ozone.moderation.defs#modEventLabel\",\"createLabelVals\": [\"" + label + "\"],\"negateLabelVals\": []}}"
+
+	_, err = SendPostWithHeaders(url, payload, accessJwt, map[string]string{"atproto-accept-labelers": bskyLabelerDid + ";redact", "atproto-proxy": bskyDid + "#atproto_labeler"})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Label added successfully")
+	return nil
+}
+
 func SendPost(url string, payload string, accessJwt string) (*http.Response, error) {
+	return SendPostWithHeaders(url, payload, accessJwt, map[string]string{})
+}
+
+func SendPostWithHeaders(url string, payload string, accessJwt string, additionalHeaders map[string]string) (*http.Response, error) {
 	fmt.Println("Sending POST request to " + url)
 	// check if url constains login
 	if strings.Contains(url, "createSession") {
@@ -788,6 +828,9 @@ func SendPost(url string, payload string, accessJwt string) (*http.Response, err
 
 	if accessJwt != "" {
 		request.Header.Add("Authorization", "Bearer "+accessJwt)
+	}
+	for key, value := range additionalHeaders {
+		request.Header.Add(key, value)
 	}
 	request.Header.Add("Content-Type", "application/json")
 

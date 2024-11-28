@@ -7,7 +7,7 @@
 	"features": {
 		"ghcr.io/lee-orr/rusty-dev-containers/fermyon-spin:0": {}
 	},
-	"postCreateCommand": "wget https://github.com/tinygo-org/tinygo/releases/download/v0.34.0/tinygo_0.34.0_amd64.deb && sudo dpkg -i tinygo_0.34.0_amd64.deb && rm tinygo*.deb",
+	"postCreateCommand": "wget https://github.com/tinygo-org/tinygo/releases/download/v0.34.0/tinygo_0.34.0_arm64.deb && sudo dpkg -i tinygo_0.34.0_arm64.deb && rm tinygo*.deb",
 	"customizations": {
 		"vscode": {
 			"extensions": [
