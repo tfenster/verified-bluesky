@@ -2,3 +2,6 @@ export SPIN_VARIABLE_BSKY_HANDLE="verifiedsky.bsky.social"
 export SPIN_VARIABLE_BSKY_DID="did:plc:px34esz3zqocesnhjoyllu7q"
 export SPIN_VARIABLE_BSKY_LABELER_DID="did:plc:ar7c4by46qjdydhdevvrndac"
 export SPIN_VARIABLE_BSKY_PASSWORD="..."
+
+# spin cloud variables list --app verified-bluesky
+# spin cloud variables set bsky_labeler_did="did:plc:ar7c4by46qjdydhdevvrndac" --app verified-bluesky
