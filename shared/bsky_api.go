@@ -804,6 +804,13 @@ func SetLabel(label string, targetHandle string, accessJwt string, endpoint stri
 		return err
 	}
 
+	payload = "{\"subject\": {\"$type\": \"com.atproto.admin.defs#repoRef\",\"did\": \"" + targetProfile.DID + "\"},\"createdBy\": \"" + bskyDid + "\",\"subjectBlobCids\": [],\"event\": {\"$type\": \"tools.ozone.moderation.defs#modEventAcknowledge\"}}"
+
+	_, err = SendPostWithHeaders(url, payload, accessJwt, map[string]string{"atproto-accept-labelers": bskyLabelerDid + ";redact", "atproto-proxy": bskyDid + "#atproto_labeler"})
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("Label added successfully")
 	return nil
 }
