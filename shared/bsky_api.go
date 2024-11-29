@@ -96,6 +96,19 @@ type ListAndStarterPacks struct {
 	StarterPacks []ListOrStarterPackWithUrl `json:"starterPacks"`
 }
 
+type ModerationRepoResponse struct {
+    Did            string          `json:"did"`
+    Handle         string          `json:"handle"`
+    Labels         []Label         `json:"labels"`
+}
+
+type Label struct {
+    Ver  int       `json:"ver"`
+    Src  string    `json:"src"`
+    Uri  string    `json:"uri"`
+    Val  string    `json:"val"`
+}
+
 func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle string, bskyDid string, label string, accessJwt string, endpoint string) ([]ListOrStarterPackWithUrl, error) {
 	store, err := kv.OpenStore("default")
 	if err != nil {
@@ -795,24 +808,52 @@ func SetLabel(label string, targetHandle string, accessJwt string, endpoint stri
 		return err
 	}
 
-	url := endpoint + "/xrpc/tools.ozone.moderation.emitEvent"
+	additionalHeaders := map[string]string{"atproto-accept-labelers": bskyLabelerDid + ";redact", "atproto-proxy": bskyDid + "#atproto_labeler"}
 
-	payload := "{\"subject\": {\"$type\": \"com.atproto.admin.defs#repoRef\",\"did\": \"" + targetProfile.DID + "\"},\"createdBy\": \"" + bskyDid + "\",\"subjectBlobCids\": [],\"event\": {\"$type\": \"tools.ozone.moderation.defs#modEventLabel\",\"createLabelVals\": [\"" + label + "\"],\"negateLabelVals\": []}}"
+	url := endpoint + "/xrpc/tools.ozone.moderation.getRepo?did=" + url.QueryEscape(targetProfile.DID)
 
-	_, err = SendPostWithHeaders(url, payload, accessJwt, map[string]string{"atproto-accept-labelers": bskyLabelerDid + ";redact", "atproto-proxy": bskyDid + "#atproto_labeler"})
+	resp, err := SendGetWithHeader(url, accessJwt, additionalHeaders)
 	if err != nil {
 		return err
 	}
 
-	payload = "{\"subject\": {\"$type\": \"com.atproto.admin.defs#repoRef\",\"did\": \"" + targetProfile.DID + "\"},\"createdBy\": \"" + bskyDid + "\",\"subjectBlobCids\": [],\"event\": {\"$type\": \"tools.ozone.moderation.defs#modEventAcknowledge\"}}"
-
-	_, err = SendPostWithHeaders(url, payload, accessJwt, map[string]string{"atproto-accept-labelers": bskyLabelerDid + ";redact", "atproto-proxy": bskyDid + "#atproto_labeler"})
+	var response ModerationRepoResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Label added successfully")
-	return nil
+	found := false
+	for _, existingLabel := range response.Labels {
+		if existingLabel.Val == label {
+			found = true
+			break
+		}
+	}
+
+	if found {
+		fmt.Println("Label already exists")
+		return nil
+	} else {
+		url = endpoint + "/xrpc/tools.ozone.moderation.emitEvent"
+
+		payload := "{\"subject\": {\"$type\": \"com.atproto.admin.defs#repoRef\",\"did\": \"" + targetProfile.DID + "\"},\"createdBy\": \"" + bskyDid + "\",\"subjectBlobCids\": [],\"event\": {\"$type\": \"tools.ozone.moderation.defs#modEventLabel\",\"createLabelVals\": [\"" + label + "\"],\"negateLabelVals\": []}}"
+
+		_, err = SendPostWithHeaders(url, payload, accessJwt, additionalHeaders)
+		if err != nil {
+			return err
+		}
+
+		payload = "{\"subject\": {\"$type\": \"com.atproto.admin.defs#repoRef\",\"did\": \"" + targetProfile.DID + "\"},\"createdBy\": \"" + bskyDid + "\",\"subjectBlobCids\": [],\"event\": {\"$type\": \"tools.ozone.moderation.defs#modEventAcknowledge\"}}"
+
+		_, err = SendPostWithHeaders(url, payload, accessJwt, additionalHeaders)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Label added successfully")
+		return nil
+	}
 }
 
 func SendPost(url string, payload string, accessJwt string) (*http.Response, error) {
@@ -854,6 +895,10 @@ func SendPostWithHeaders(url string, payload string, accessJwt string, additiona
 }
 
 func SendGet(url string, accessJwt string) (*http.Response, error) {
+	return SendGetWithHeader(url, accessJwt, map[string]string{})
+}
+
+func SendGetWithHeader(url string, accessJwt string, additionalHeaders map[string]string) (*http.Response, error) {
 	fmt.Println("Sending GET request to " + url)
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -863,6 +908,9 @@ func SendGet(url string, accessJwt string) (*http.Response, error) {
 
 	if accessJwt != "" {
 		request.Header.Add("Authorization", "Bearer "+accessJwt)
+	}
+	for key, value := range additionalHeaders {
+		request.Header.Add(key, value)
 	}
 
 	resp, err := spinhttp.Send(request)
