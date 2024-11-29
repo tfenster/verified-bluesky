@@ -298,6 +298,10 @@ func init() {
 			// get bsky profile
 			fmt.Println("Getting Bluesky profile for handle " + mvpValidationRequest.BskyHandle)
 			accessJwt, endpoint, err := shared.LoginToBsky()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
 
 			profile, err := shared.GetProfile(mvpValidationRequest.BskyHandle, accessJwt, endpoint)
 			if err != nil {
