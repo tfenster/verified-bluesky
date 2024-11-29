@@ -101,3 +101,25 @@ key_value_stores = ["default"]
 
 [component.kv-explorer.variables]
 kv_credentials = "{{ kv_explorer_user }}:{{ kv_explorer_password }}"
+
+[[trigger.http]]
+route = "/validate-dynamicsminds/..."
+component = "validate-dynamicsminds"
+
+[component.validate-dynamicsminds]
+source = "validate-dynamicsminds/main.wasm"
+allowed_outbound_hosts = [
+    "https://bsky.social",
+    "https://api.runevents.net",
+    "https://*.bsky.network",
+]
+key_value_stores = ["default"]
+[component.validate-dynamicsminds.variables]
+bsky_handle = "{{ bsky_handle }}"
+bsky_password = "{{ bsky_password }}"
+bsky_did = "{{ bsky_did }}"
+bsky_labeler_did = "{{ bsky_labeler_did }}"
+[component.validate-dynamicsminds.build]
+command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
+workdir = "validate-dynamicsminds"
+watch = ["**/*.go", "go.mod"]
