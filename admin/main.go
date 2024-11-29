@@ -50,7 +50,7 @@ func init() {
 				return
 			}
 
-			accessJwt, endpoint, err := shared.LoginToBskyWithReq(r)
+			accessJwt, endpoint, err := shared.LoginToBsky()
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
