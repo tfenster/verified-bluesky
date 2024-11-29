@@ -204,6 +204,31 @@ func ConvertToStruct(uri string, title string, listOrStarterPack string, bskyHan
 }
 
 func LoginToBsky() (string, string, error) {
+	store, err := kv.OpenStore("default")
+	if err != nil {
+		return "", "", err
+	}
+	defer store.Close()
+
+	accessJwtFromStore, err := store.Get("accessJwt")
+	if err != nil && err.Error() != "no such key" {
+		return "", "", err
+	}
+	if (accessJwtFromStore != nil && string(accessJwtFromStore) != "") {
+		fmt.Println("Check if accessJwt is still valid")
+		url := "https://bsky.social/xrpc/com.atproto.server.getSession"
+		sessionResponse, err := SendGet(url, string(accessJwtFromStore))
+		if err == nil && sessionResponse.StatusCode == 200 {
+			fmt.Println("AccessJwt is still valid")
+			endpointFromStore, err := store.Get("endpoint")
+			if err != nil {
+				return "", "", err
+			}
+			return string(accessJwtFromStore), string(endpointFromStore), nil
+		}
+	}
+
+	fmt.Println("No accessJwt in store or not valid anymore, logging in again")
 	bskyPwd, err := variables.Get("bsky_password")
 	if err != nil {
 		return "", "", err
@@ -236,6 +261,21 @@ func LoginToBskyWithPwd(bskyPwd string) (string, string, error) {
 	}
 
 	fmt.Println("Logged in successfully")
+	store, err := kv.OpenStore("default")
+	if err != nil {
+		return "", "", err
+	}
+	defer store.Close()
+
+	fmt.Println("Storing accessJwt and endpoint")
+	err = store.Set("accessJwt", []byte(response.AccessJwt))
+	if err != nil {
+		fmt.Println("Error storing accessJwt: " + err.Error())
+	}
+	err = store.Set("endpoint", []byte(response.DidDoc.Service[0].ServiceEndpoint))
+	if err != nil {
+		fmt.Println("Error storing endpoint: " + err.Error())
+	}
 	return response.AccessJwt, response.DidDoc.Service[0].ServiceEndpoint, nil
 }
 
