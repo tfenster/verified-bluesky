@@ -1,1 +1,1 @@
-Check [https://verified-bluesky-rpu7w3bv.fermyon.app/](https://verified-bluesky-rpu7w3bv.fermyon.app/) to see this in action
+Check [https://verified-bluesky-rpu7w3bv.fermyon.app/](https://verified-bluesky-rpu7w3bv.fermyon.app/) to see this in action. Check [https://tobiasfenster.io/verifying-user-accounts-on-bluesky-with-a-wasm-spin-application](https://tobiasfenster.io/verifying-user-accounts-on-bluesky-with-a-wasm-spin-application) to understand how and why this was built
