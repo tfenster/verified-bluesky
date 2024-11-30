@@ -223,7 +223,7 @@ func init() {
 					if (title == "verificationText") {
 						w.Header().Set("Content-Type", "text/plain")
 						w.WriteHeader(http.StatusOK)
-						fmt.Fprintln(w, "This is your MVP ID, a GUID. If you open your profile on <a href=\"https://mvp.microsoft.com\" target=\"_blank\">mvp.microsoft.com</a>, it is the last part of the URL, after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on your MVP profile (use \"Other\" as type).</small></div>")
+						fmt.Fprintln(w, "This is your MVP ID, a GUID. If you open your profile on <a href=\"https://mvp.microsoft.com\" target=\"_blank\">mvp.microsoft.com</a>, it is the last part of the URL, after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on your MVP profile (use \"Other\" as type).")
 						return
 					}
 					fmt.Println("Getting Starter Pack and List for " + title)
