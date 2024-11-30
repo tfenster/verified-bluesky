@@ -123,3 +123,25 @@ bsky_labeler_did = "{{ bsky_labeler_did }}"
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-dynamicsminds"
 watch = ["**/*.go", "go.mod"]
+
+[[trigger.http]]
+route = "/validate-ghstar/..."
+component = "validate-ghstar"
+
+[component.validate-ghstar]
+source = "validate-ghstar/main.wasm"
+allowed_outbound_hosts = [
+    "https://bsky.social",
+    "https://stars.github.com",
+    "https://*.bsky.network",
+]
+key_value_stores = ["default"]
+[component.validate-ghstar.variables]
+bsky_handle = "{{ bsky_handle }}"
+bsky_password = "{{ bsky_password }}"
+bsky_did = "{{ bsky_did }}"
+bsky_labeler_did = "{{ bsky_labeler_did }}"
+[component.validate-ghstar.build]
+command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
+workdir = "validate-ghstar"
+watch = ["**/*.go", "go.mod"]
