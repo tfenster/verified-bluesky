@@ -16,7 +16,7 @@ func init() {
 
 	moduleKey := "ghstar"
 	moduleName := "Github Stars"
-	moduleNameShortened := "GH Stars"
+	moduleNameShortened := "GitHub Stars"
 
 	spinhttp.Handle(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
