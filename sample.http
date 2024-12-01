@@ -102,4 +102,4 @@ GET https://mavenapi-prod.azurewebsites.net/api/mvp/UserProfiles/public/2efc9bb2
 GET https://api.runevents.net/api/sessions-and-speakers/external-speakers?eventSlug=dynamicsminds-2024
 
 ###
-PUT http://localhost:3000/validate-dynamicsminds/<pwd>
+PUT http://localhost:3000/validate-javachamps/<pwds>
