@@ -75,6 +75,9 @@ func init() {
 				return true, nil
 			}
 		},
+		NamingFunc: func(m shared.ModuleSpecifics, _ string) (shared.Naming, error) {
+			return shared.SetupNamingStructure(m)
+		},
 	}
 
 	spinhttp.Handle(moduleSpecifics.Handle)

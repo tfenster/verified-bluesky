@@ -69,6 +69,9 @@ func init() {
 				return false, fmt.Errorf("Link to social network with handle %s not found for RD %s", bskyHandle, verificationId)
 			}
 		},
+		NamingFunc: func(m shared.ModuleSpecifics, _ string) (shared.Naming, error) {
+			return shared.SetupNamingStructure(m)
+		},
 	}
 
 	spinhttp.Handle(moduleSpecifics.Handle)

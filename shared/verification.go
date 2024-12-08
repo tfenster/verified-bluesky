@@ -15,6 +15,7 @@ type ModuleSpecifics struct {
 	ModuleLabel		string
 	ExplanationText	string
 	VerificationFunc  func(verificationId string, bskyHandle string) (bool, error)
+	NamingFunc        func(m ModuleSpecifics, verificationId string) (Naming, error)
 	FirstAndSecondLevel map[string][]string
 	Level1TranslationMap map[string]string
 	Level2TranslationMap map[string]string
@@ -96,7 +97,7 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		naming, err := SetupNamingStructure(m)
+		naming, err := m.NamingFunc(m, validationRequest.VerificationId)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
