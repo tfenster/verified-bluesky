@@ -30,24 +30,21 @@
                 after the @.</small></div>
         <label for="selectVerificationSource" class="sr-only">Verification source</label>
         <select class="form-select form-control" id="selectSource" onchange="updateVerification()">
-            <option value="mvp">Microsoft Most Valuable Professional</option>
-            <option value="rd">Microsoft Regional Directors</option>
+            <option value="" selected disabled>Select a source</option>
+            <option value="cncfamb">CNCF Ambassadors</option>
+            <option value="captain">Docker Captains (not implemented yet)</option>
             <option value="dynamicsminds">DynamicsMinds speakers</option>
             <option value="ghstar">GitHub Stars</option>
             <option value="javachamps">Java Champions</option>
-            <option value="cncfamb">CNCF Ambassadors</option>
-            <option value="captain">Docker Captains (not implemented yet)</option>
+            <option value="mvp">Microsoft Most Valuable Professional</option>
+            <option value="rd">Microsoft Regional Directors</option>
         </select>
         <div class="left"><small class="text-muted">Select the source for verifying you.</small></div>
         <label for="input" class="sr-only">Verification ID</label>
-        <input type="text" id="inputVerificationID" class="form-control" placeholder="Verification ID" required>
-        <div class="left"><small class="text-muted" id="explanationText">This is your MVP ID, a GUID. If you open your
-                profile on <a href="https://mvp.microsoft.com" target="_blank">mvp.microsoft.com</a>, it is the last
-                part of the URL,
-                after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on
-                your MVP profile (use "Other" as type).</small></div>
+        <input type="text" id="inputVerificationID" class="form-control" placeholder="Verification ID" required disabled>
+        <div class="left"><small class="text-muted" id="explanationText"></small></div>
         <p>&nbsp;</p>
-        <button class="btn btn-lg btn-primary btn-block" onclick="validate()" id="verifyButton">Verify</button>
+        <button class="btn btn-lg btn-primary btn-block" onclick="validate()" id="verifyButton" disabled>Verify</button>
         <div class="messageContainer" id="messageContainer"></div>
         <p class="left"><a href="overview.html">Here</a> you can find all Starter Packs and lists with verified Bluesky users
             created with this tool. To see the labels, go to <a href="https://bsky.app/profile/verifiedsky.bsky.social"
@@ -96,6 +93,8 @@
                 }
                 const verificationText = await response.text();
                 document.getElementById("explanationText").innerHTML = verificationText;
+                document.getElementById("inputVerificationID").disabled = false;
+                document.getElementById("verifyButton").disabled = false;
             } catch (error) {
                 console.error(error.message);
                 showAlert(error.message);
