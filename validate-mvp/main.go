@@ -3,10 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/shared"
 
@@ -208,159 +205,77 @@ func init() {
 		"Azure Virtual Desktop":                                          "Azure VD",
 	}
 
-	moduleKey := "mvp"
-	moduleName := "Microsoft Most Valuable Professionals (MVPs)"
-	moduleNameShortened := "MVPs"
-
-	spinhttp.Handle(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-
-		case http.MethodGet:
-			lastSlash := strings.LastIndex(r.URL.Path, "/")
-			if lastSlash > 0 {
-				title := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
-				if title != "" {
-					if (title == "verificationText") {
-						w.Header().Set("Content-Type", "text/plain")
-						w.WriteHeader(http.StatusOK)
-						fmt.Fprintln(w, "This is your MVP ID, a GUID. If you open your profile on <a href=\"https://mvp.microsoft.com\" target=\"_blank\">mvp.microsoft.com</a>, it is the last part of the URL, after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on your MVP profile (use \"Other\" as type).")
-						return
-					}
-					fmt.Println("Getting Starter Pack and List for " + title)
-					accessJwt, endpoint, err := shared.LoginToBsky()
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusUnauthorized)
-					}
-					err = shared.RespondWithStarterPacksAndListsForTitle(title, w, accessJwt, endpoint)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-					}
-					return
-				}
-			}
-			fmt.Println("Getting all Starter Packs and Lists")
-			accessJwt, endpoint, err := shared.LoginToBsky()
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-			}
-			err = shared.RespondWithAllStarterPacksAndListsForModule(moduleKey, moduleName, moduleNameShortened, mvpAwardsAndTechnologyFocusAreas, mvpAwardTranslationMap, mvpTechFocusTranslationMap, w, accessJwt, endpoint)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-		case http.MethodPost:
-			// get request body
-			body, err := io.ReadAll(r.Body)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer r.Body.Close()
-
-			var mvpValidationRequest shared.ValidationRequest
-			err = json.Unmarshal(body, &mvpValidationRequest)
-			if err != nil {
-				http.Error(w, "Error decoding body JSON: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-			mvpValidationRequest.BskyHandle = strings.ToLower(mvpValidationRequest.BskyHandle)
-
+	moduleSpecifics := shared.ModuleSpecifics{
+		ModuleKey:            "mvp",
+		ModuleName:           "Microsoft Most Valuable Professionals (MVPs)",
+		ModuleNameShortened:  "MVPs",
+		ModuleLabel:          "ms-mvp",
+		ExplanationText:      "This is your MVP ID, a GUID. If you open your profile on <a href=\"https://mvp.microsoft.com\" target=\"_blank\">mvp.microsoft.com</a>, it is the last part of the URL, after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on your MVP profile (use \"Other\" as type).",
+		FirstAndSecondLevel:  mvpAwardsAndTechnologyFocusAreas,
+		Level1TranslationMap: mvpAwardTranslationMap,
+		Level2TranslationMap: mvpTechFocusTranslationMap,
+		VerificationFunc: func(verificationId string, bskyHandle string) (bool, error) {
 			// get MVP profile
-			fmt.Println("Validating MVP with ID: " + mvpValidationRequest.VerificationId)
-			url := fmt.Sprintf("https://mavenapi-prod.azurewebsites.net/api/mvp/UserProfiles/public/%s", url.QueryEscape(mvpValidationRequest.VerificationId))
-
-			resp, err := shared.SendGet(url, "")
+			fmt.Println("Validating MVP with ID: " + verificationId)
+			profile, err := getMvpProfile(verificationId)
 			if err != nil {
-				fmt.Println("Error fetching the URL: " + err.Error())
-				http.Error(w, "Error fetching the MVP profile, probably caused by an invalid MVP ID: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer resp.Body.Close()
-
-			var response Response
-			err = json.NewDecoder(resp.Body).Decode(&response)
-			if err != nil {
-				fmt.Println("Error decoding MVP JSON: " + err.Error())
-				http.Error(w, "Error decoding MVP JSON, probably caused by an invalid MVP ID: "+err.Error(), http.StatusInternalServerError)
-				return
+				return false, err
 			}
 
 			// check if bsky handle is in MVP profile
-			if containsSocialNetworkWithHandle(response.UserProfile.UserProfileSocialNetwork, mvpValidationRequest.BskyHandle) {
-				fmt.Print("Social network with handle '" + mvpValidationRequest.BskyHandle + "' found\n")
+			if containsSocialNetworkWithHandle(profile.UserProfile.UserProfileSocialNetwork, bskyHandle) {
+				fmt.Print("Social network with handle '" + bskyHandle + "' found\n")
+				return true, nil
 			} else {
-				fmt.Print("Social network with handle '" + mvpValidationRequest.BskyHandle + "' not found\n")
-				http.Error(w, fmt.Sprintf("Link to social network with handle %s not found for MVP %s", mvpValidationRequest.BskyHandle, mvpValidationRequest.VerificationId), http.StatusNotFound)
-				return
+				fmt.Print("Social network with handle '" + bskyHandle + "' not found\n")
+				return false, fmt.Errorf(fmt.Sprintf("Link to social network with handle %s not found for MVP %s", bskyHandle, verificationId))
 			}
-
-			// get bsky profile
-			fmt.Println("Getting Bluesky profile for handle " + mvpValidationRequest.BskyHandle)
-			accessJwt, endpoint, err := shared.LoginToBsky()
+		},
+		NamingFunc: func(m shared.ModuleSpecifics, verificationId string) (shared.Naming, error) {
+			profile, err := getMvpProfile(verificationId)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				return
+				return shared.Naming{}, err
 			}
-
-			profile, err := shared.GetProfile(mvpValidationRequest.BskyHandle, accessJwt, endpoint)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			if profile == (shared.ProfileResponse{}) {
-				http.Error(w, "Error getting profile", http.StatusInternalServerError)
-				return
-			}
-
-			// create naming structure
 			firstAndSecondLevel := map[string][]string{}
-			for i, awardCategory := range response.UserProfile.AwardCategory {
-				firstAndSecondLevel[awardCategory] = []string{response.UserProfile.TechnologyFocusArea[i]}
+			for i, awardCategory := range profile.UserProfile.AwardCategory {
+				firstAndSecondLevel[awardCategory] = []string{profile.UserProfile.TechnologyFocusArea[i]}
 			}
-			naming, err := shared.SetupNamingStructure(moduleKey, moduleName, moduleNameShortened, firstAndSecondLevel, mvpAwardTranslationMap, mvpTechFocusTranslationMap)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
+			return shared.SetupNamingStructure(shared.ModuleSpecifics{
+				ModuleKey:            m.ModuleKey,
+				ModuleName:           m.ModuleName,
+				ModuleNameShortened:  m.ModuleNameShortened,
+				ModuleLabel:          m.ModuleLabel,
+				ExplanationText:      m.ExplanationText,
+				FirstAndSecondLevel:  firstAndSecondLevel,
+				Level1TranslationMap: m.Level1TranslationMap,
+				Level2TranslationMap: m.Level2TranslationMap,
+				VerificationFunc:     m.VerificationFunc,
+				NamingFunc: 		  m.NamingFunc,
+			})
+		},
+	}
 
-			// store MVP and add to bsky starter pack
-			fmt.Println("Storing MVP and adding to Bluesky starter pack")
-			result, err := shared.StoreAndAddToBskyStarterPack(naming, mvpValidationRequest.VerificationId, mvpValidationRequest.BskyHandle, profile.DID, "ms-mvp", accessJwt, endpoint)
+	spinhttp.Handle(moduleSpecifics.Handle)
+}
 
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
+func getMvpProfile(verificationId string) (Response, error) {
+	url := fmt.Sprintf("https://mavenapi-prod.azurewebsites.net/api/mvp/UserProfiles/public/%s", url.QueryEscape(verificationId))
 
-			jsonResult, err := json.Marshal(result)
-			if err != nil {
-				http.Error(w, "Error encoding result to JSON: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
+	resp, err := shared.SendGet(url, "")
+	if err != nil {
+		fmt.Println("Error fetching the URL: " + err.Error())
+		return Response{}, fmt.Errorf("Error fetching the MVP profile, probably caused by an invalid MVP ID: "+err.Error())
+	}
+	defer resp.Body.Close()
 
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
+	var response Response
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		fmt.Println("Error decoding MVP JSON: " + err.Error())
+		return Response{}, fmt.Errorf("Error decoding MVP JSON, probably caused by an invalid MVP ID: "+err.Error())
+	}
 
-			fmt.Fprintln(w, string(jsonResult))
-
-		case http.MethodPut:
-			accessJwt, endpoint, err := shared.LoginToBskyWithReq(r)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-			}
-
-			fmt.Println("Setting up all Starter Packs and Lists")
-			err = shared.SetupAllStarterPacksAndLists(moduleKey, moduleName, moduleNameShortened, mvpAwardsAndTechnologyFocusAreas, mvpAwardTranslationMap, mvpTechFocusTranslationMap, w, accessJwt, endpoint)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-		default:
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		}
-	})
+	return response, nil
 }
 
 func containsSocialNetworkWithHandle(socialNetworks []SocialNetwork, handle string) bool {

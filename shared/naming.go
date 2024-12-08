@@ -27,19 +27,19 @@ type FlatNaming struct {
 	FirstAndSecondLevel map[string][]string
 }
 
-func SetupNamingStructure(moduleKey string, moduleName string, moduleNameShortened string, firstAndSecondLevel map[string][]string, level1TranslationMap map[string]string, level2TranslationMap map[string]string) (Naming, error) {
-	title := "Verified " + moduleNameShortened
-	titleShortened := "Ver. " + moduleNameShortened
-	description := "Verified " + moduleName
+func SetupNamingStructure(moduleSpecifics ModuleSpecifics) (Naming, error) {
+	title := "Verified " + moduleSpecifics.ModuleNameShortened
+	titleShortened := "Ver. " + moduleSpecifics.ModuleNameShortened
+	description := "Verified " + moduleSpecifics.ModuleName
 	firstAndSecondLevelTitleAndDesc := map[TitleAndDescription][]TitleAndDescription{}
 
-	for first, secondArray := range firstAndSecondLevel {
+	for first, secondArray := range moduleSpecifics.FirstAndSecondLevel {
 		firstTitle := title + ": " + first
 		if len(firstTitle) > 50 {
 			firstTitle = titleShortened + ": " + first
 		}
 		if len(firstTitle) > 50 {
-			translated, ok := level1TranslationMap[first]
+			translated, ok := moduleSpecifics.Level1TranslationMap[first]
 			if ok {
 				firstTitle = titleShortened + ": " + translated
 			}
@@ -57,14 +57,14 @@ func SetupNamingStructure(moduleKey string, moduleName string, moduleNameShorten
 				secondTitle = titleShortened + ": " + first + " - " + second
 			}
 			if len(secondTitle) > 50 {
-				translated, ok := level2TranslationMap[second]
+				translated, ok := moduleSpecifics.Level2TranslationMap[second]
 				if ok {
 					second = translated
 					secondTitle = titleShortened + ": " + first + " - " + second
 				}
 			}
 			if len(secondTitle) > 50 {
-				translated, ok := level1TranslationMap[first]
+				translated, ok := moduleSpecifics.Level1TranslationMap[first]
 				if ok {
 					secondTitle = titleShortened + ": " + translated + " - " + second
 				}
@@ -77,7 +77,7 @@ func SetupNamingStructure(moduleKey string, moduleName string, moduleNameShorten
 	}
 
 	return Naming{
-		Key:                 moduleKey,
+		Key:                 moduleSpecifics.ModuleKey,
 		Title:               title,
 		TitleShortened:      titleShortened,
 		Description:         description,
@@ -85,8 +85,8 @@ func SetupNamingStructure(moduleKey string, moduleName string, moduleNameShorten
 	}, nil
 }
 
-func SetupFlatNamingStructure(moduleKey string, moduleName string, moduleNameShortened string, firstAndSecondLevel map[string][]string, level1TranslationMap map[string]string, level2TranslationMap map[string]string) (FlatNaming, error) {
-	naming, err := SetupNamingStructure(moduleKey, moduleName, moduleNameShortened, firstAndSecondLevel, level1TranslationMap, level2TranslationMap)
+func SetupFlatNamingStructure(moduleSpecifics ModuleSpecifics) (FlatNaming, error) {
+	naming, err := SetupNamingStructure(moduleSpecifics)
 	if err != nil {
 		return FlatNaming{}, err
 	}
