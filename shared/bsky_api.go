@@ -795,8 +795,8 @@ func RespondWithStarterPacksAndListsForTitle(title string, w http.ResponseWriter
 	return nil
 }
 
-func RespondWithAllStarterPacksAndListsForModule(moduleKey string, moduleName string, moduleNameShortened string, firstAndSecondLevel map[string][]string, level1TranslationMap map[string]string, level2TranslationMap map[string]string, w http.ResponseWriter, accessJwt string, endpoint string) error {
-	naming, err := SetupFlatNamingStructure(moduleKey, moduleName, moduleNameShortened, firstAndSecondLevel, level1TranslationMap, level2TranslationMap)
+func RespondWithAllStarterPacksAndListsForModule(moduleSpecifics ModuleSpecifics, w http.ResponseWriter, accessJwt string, endpoint string) error {
+	naming, err := SetupFlatNamingStructure(moduleSpecifics)
 	if err != nil {
 		return err
 	}
@@ -813,8 +813,8 @@ func RespondWithAllStarterPacksAndListsForModule(moduleKey string, moduleName st
 	return nil
 }
 
-func SetupAllStarterPacksAndLists(moduleKey string, moduleName string, moduleNameShortened string, firstAndSecondLevel map[string][]string, level1TranslationMap map[string]string, level2TranslationMap map[string]string, w http.ResponseWriter, accessJwt string, endpoint string) error {
-	naming, err := SetupNamingStructure(moduleKey, moduleName, moduleNameShortened, firstAndSecondLevel, level1TranslationMap, level2TranslationMap)
+func SetupAllStarterPacksAndLists(moduleSpecifics ModuleSpecifics, w http.ResponseWriter, accessJwt string, endpoint string) error {
+	naming, err := SetupNamingStructure(moduleSpecifics)
 	if err != nil {
 		return err
 	}
