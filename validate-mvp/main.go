@@ -209,6 +209,7 @@ func init() {
 		ModuleKey:            "mvp",
 		ModuleName:           "Microsoft Most Valuable Professionals (MVPs)",
 		ModuleNameShortened:  "MVPs",
+		ModuleLabel:          "ms-mvp",
 		ExplanationText:      "This is your MVP ID, a GUID. If you open your profile on <a href=\"https://mvp.microsoft.com\" target=\"_blank\">mvp.microsoft.com</a>, it is the last part of the URL, after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on your MVP profile (use \"Other\" as type).",
 		FirstAndSecondLevel:  mvpAwardsAndTechnologyFocusAreas,
 		Level1TranslationMap: mvpAwardTranslationMap,

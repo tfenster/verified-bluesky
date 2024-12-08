@@ -36,6 +36,7 @@ func init() {
 		ModuleKey:            "rd",
 		ModuleName:           "Microsoft Regional Directors (RDs)",
 		ModuleNameShortened:  "RDs",
+		ModuleLabel:          "ms-rd",
 		ExplanationText:      "This is your RD ID, a GUID. If you open your profile on <a href=\"https://rd.microsoft.com\" target=\"_blank\">rd.microsoft.com</a>, it is the last part of the URL, after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on your RD profile (use \"Other\" as type).",
 		FirstAndSecondLevel:  make(map[string][]string),
 		Level1TranslationMap: make(map[string]string),

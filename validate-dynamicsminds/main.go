@@ -33,6 +33,7 @@ func init() {
 		ModuleKey:            "dynamicsminds",
 		ModuleName:           "DynamicsMinds speakers",
 		ModuleNameShortened:  "DynamicsMinds",
+		ModuleLabel: 		"dynamicsminds",
 		ExplanationText:      "This is your name, exactly as it appears on the DynamicsMinds speakers page. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) somewhere in your biography.",
 		FirstAndSecondLevel:  make(map[string][]string),
 		Level1TranslationMap: make(map[string]string),

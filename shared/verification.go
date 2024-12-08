@@ -12,6 +12,7 @@ type ModuleSpecifics struct {
 	ModuleKey          string
 	ModuleName         string
 	ModuleNameShortened string
+	ModuleLabel		string
 	ExplanationText	string
 	VerificationFunc  func(verificationId string, bskyHandle string) (bool, error)
 	FirstAndSecondLevel map[string][]string
@@ -103,7 +104,7 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 
 		// store add to bsky starter pack
 		fmt.Println("Storing verified user and adding to Bluesky starter pack")
-		result, err := StoreAndAddToBskyStarterPack(naming, validationRequest.VerificationId, validationRequest.BskyHandle, profile.DID, m.ModuleKey, accessJwt, endpoint)
+		result, err := StoreAndAddToBskyStarterPack(naming, validationRequest.VerificationId, validationRequest.BskyHandle, profile.DID, m.ModuleLabel, accessJwt, endpoint)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

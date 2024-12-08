@@ -39,6 +39,7 @@ func init() {
 		ModuleKey:            "javachamps",
 		ModuleName:           "Java Champions",
 		ModuleNameShortened:  "Java Champions",
+		ModuleLabel:          "javachamps",
 		ExplanationText:      "This is your name, exactly as it appears on the Java Champions page. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) somewhere in your social links.",
 		FirstAndSecondLevel:  make(map[string][]string),
 		Level1TranslationMap: make(map[string]string),
