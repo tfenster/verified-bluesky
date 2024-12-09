@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.9.1"
+version = "0.9.2"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -188,4 +188,17 @@ bsky_labeler_did = "{{ bsky_labeler_did }}"
 [component.validate-cncfamb.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-cncfamb"
+watch = ["**/*.go", "go.mod"]
+
+[[trigger.http]]
+route = "/stats/..."
+component = "stats"
+
+[component.stats]
+source = "stats/main.wasm"
+allowed_outbound_hosts = []
+key_value_stores = ["default"]
+[component.stats.build]
+command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
+workdir = "stats"
 watch = ["**/*.go", "go.mod"]

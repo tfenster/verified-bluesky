@@ -59,8 +59,8 @@
             you on Bluesky.
             <br>&nbsp;<br>
             As a positive side effect, we get a nice collection of Starter Packs and lists fo those sources with only verified
-            members.
-            <br>&nbsp;<br>
+            members. Currently we have the following numbers of verified Bluesky users:<br> <span id="verifiedCount">Loading...</span>
+            <br>
             Please note that in order to validate continuously whether the verification is still OK, we
             store your
             Bluesky handle and the verification ID in our backend. We will never share that data with anyone, but if you
@@ -75,7 +75,9 @@
             <br>&nbsp;<br>
             Please note that this is very much work in progress, so no guarantees that it works as expected, that it will stay the
             same or even stay available. I might also have to reorganize things and then you might have to re-enter your data. I
-            will try to avoid that, but I can't promise it.
+            will try to avoid that, but I can't promise it. To learn about more how this works, check <a
+                href="https://tobiasfenster.io/verifying-user-accounts-on-bluesky-with-a-wasm-spin-application" target="_blank">this
+                blog post</a> about it.
             </p>
     </form>
 
@@ -161,6 +163,39 @@
             </div>
         `;
         }
+        async function getStats() {
+            const statsContainer = document.getElementById("verifiedCount");
+            const url = "/stats";
+            try {
+                const response = await fetch(url, {
+                    method: "GET"
+                });
+                if (!response.ok) {
+                    throw new Error(`An error occured: ${await response.text()}`);
+                }
+                const statsJson = await response.json();
+                const stats = Object.entries(statsJson);
+                const select = document.getElementById("selectSource");
+                const options = select.options;
+                let statsHtml = "";
+                stats.forEach(([key, value]) => {
+                    for (let i = 0; i < options.length; i++) {
+                        if (options[i].value === key) {
+                            key = options[i].text;
+                            break;
+                        }
+                    }
+                    statsHtml += `${key}: ${value}<br>`;
+                });
+                statsContainer.innerHTML = statsHtml;
+            } catch (error) {
+                console.error(error.message);
+                showAlert(error.message);
+            }
+        }
+        window.onload = function() {
+            getStats();
+        };
     </script>
 
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
