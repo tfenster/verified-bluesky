@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/fermyon/spin/sdk/go/v2/variables"
 )
 
 type ModuleSpecifics struct {
@@ -22,6 +24,11 @@ type ModuleSpecifics struct {
 }
 
 func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
+	verifyOnly, err := variables.Get("verify_only")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	switch r.Method {
 
 	case http.MethodGet:
@@ -47,6 +54,12 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+		
+		if (verifyOnly == "true") {
+			http.Error(w, "Method not allowed in verify_only mode", http.StatusMethodNotAllowed)
+			return
+		}
+
 		fmt.Println("Getting all Starter Packs and Lists")
 		accessJwt, endpoint, err := LoginToBsky()
 		if err != nil {
@@ -103,13 +116,34 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// store add to bsky starter pack
-		fmt.Println("Storing verified user and adding to Bluesky starter pack")
-		result, err := StoreAndAddToBskyStarterPack(naming, validationRequest.VerificationId, validationRequest.BskyHandle, profile.DID, m.ModuleLabel, accessJwt, endpoint)
+		result := []ListOrStarterPackWithUrl{}
 
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+		if (verifyOnly == "true") {
+			result = append(result, ListOrStarterPackWithUrl{
+				Title: naming.Title,
+				URL: "",
+			})
+			for firstLevel, secondLevels := range naming.FirstAndSecondLevel {
+				result = append(result, ListOrStarterPackWithUrl{
+					Title: firstLevel.Title,
+					URL: "",
+				})
+				for _, secondLevel := range secondLevels {
+					result = append(result, ListOrStarterPackWithUrl{
+						Title: secondLevel.Title,
+						URL: "",
+					})
+				}
+			}
+		} else {
+			// store add to bsky starter pack
+			fmt.Println("Storing verified user and adding to Bluesky starter pack")
+			result, err = StoreAndAddToBskyStarterPack(naming, validationRequest.VerificationId, validationRequest.BskyHandle, profile.DID, m.ModuleLabel, accessJwt, endpoint)
+
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		jsonResult, err := json.Marshal(result)
@@ -125,6 +159,10 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 		
 
 	case http.MethodPut:
+		if (verifyOnly == "true") {
+			http.Error(w, "Method not allowed in verify_only mode", http.StatusMethodNotAllowed)
+			return
+		}
 		accessJwt, endpoint, err := LoginToBskyWithReq(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)

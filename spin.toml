@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.10.0"
+version = "0.10.1"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -14,6 +14,7 @@ bsky_labeler_did = { required = true }
 admin_mode = { default = "false" }
 kv_explorer_user = { required = true }
 kv_explorer_password = { required = true }
+verify_only = { default = "true" }
 
 [[trigger.http]]
 route = "/admin/..."
@@ -32,6 +33,7 @@ bsky_password = "{{ bsky_password }}"
 bsky_did = "{{ bsky_did }}"
 bsky_labeler_did = "{{ bsky_labeler_did }}"
 admin_mode = "{{ admin_mode }}"
+verify_only = "{{ verify_only }}"
 [component.admin.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "admin"
@@ -54,6 +56,7 @@ bsky_handle = "{{ bsky_handle }}"
 bsky_password = "{{ bsky_password }}"
 bsky_did = "{{ bsky_did }}"
 bsky_labeler_did = "{{ bsky_labeler_did }}"
+verify_only = "{{ verify_only }}"
 [component.validate-mvp.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-mvp"
@@ -76,6 +79,7 @@ bsky_handle = "{{ bsky_handle }}"
 bsky_password = "{{ bsky_password }}"
 bsky_did = "{{ bsky_did }}"
 bsky_labeler_did = "{{ bsky_labeler_did }}"
+verify_only = "{{ verify_only }}"
 [component.validate-rd.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-rd"
@@ -96,7 +100,6 @@ route = "/internal/kv-explorer/..."
 [component.kv-explorer]
 source = { url = "https://github.com/fermyon/spin-kv-explorer/releases/download/v0.10.0/spin-kv-explorer.wasm", digest = "sha256:65bc286f8315746d1beecd2430e178f539fa487ebf6520099daae09a35dbce1d" }
 allowed_outbound_hosts = ["redis://*:*", "mysql://*:*", "postgres://*:*"]
-# add or remove stores you want to explore here
 key_value_stores = ["default"]
 
 [component.kv-explorer.variables]
@@ -119,6 +122,7 @@ bsky_handle = "{{ bsky_handle }}"
 bsky_password = "{{ bsky_password }}"
 bsky_did = "{{ bsky_did }}"
 bsky_labeler_did = "{{ bsky_labeler_did }}"
+verify_only = "{{ verify_only }}"
 [component.validate-dynamicsminds.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-dynamicsminds"
@@ -141,6 +145,7 @@ bsky_handle = "{{ bsky_handle }}"
 bsky_password = "{{ bsky_password }}"
 bsky_did = "{{ bsky_did }}"
 bsky_labeler_did = "{{ bsky_labeler_did }}"
+verify_only = "{{ verify_only }}"
 [component.validate-ghstar.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-ghstar"
@@ -163,6 +168,7 @@ bsky_handle = "{{ bsky_handle }}"
 bsky_password = "{{ bsky_password }}"
 bsky_did = "{{ bsky_did }}"
 bsky_labeler_did = "{{ bsky_labeler_did }}"
+verify_only = "{{ verify_only }}"
 [component.validate-javachamps.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-javachamps"
@@ -185,6 +191,7 @@ bsky_handle = "{{ bsky_handle }}"
 bsky_password = "{{ bsky_password }}"
 bsky_did = "{{ bsky_did }}"
 bsky_labeler_did = "{{ bsky_labeler_did }}"
+verify_only = "{{ verify_only }}"
 [component.validate-cncfamb.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-cncfamb"
@@ -220,6 +227,7 @@ bsky_handle = "{{ bsky_handle }}"
 bsky_password = "{{ bsky_password }}"
 bsky_did = "{{ bsky_did }}"
 bsky_labeler_did = "{{ bsky_labeler_did }}"
+verify_only = "{{ verify_only }}"
 [component.validate-oracleace.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-oracleace"
