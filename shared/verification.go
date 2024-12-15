@@ -24,6 +24,11 @@ type ModuleSpecifics struct {
 }
 
 func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
+	// list of bsky handles that are blacklisted, which means request to verify them will be rejected
+	bskyHandleBlacklist := []string{
+		"khmarbaise.bsky.social",
+	}
+
 	verifyOnly, err := variables.Get("verify_only")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -87,6 +92,14 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		validationRequest.BskyHandle = strings.ToLower(validationRequest.BskyHandle)
+
+		// check if bsky handle is blacklisted
+		for _, blacklistedHandle := range bskyHandleBlacklist {
+			if validationRequest.BskyHandle == blacklistedHandle {
+				http.Error(w, "The Bluesky handle " + validationRequest.BskyHandle + " has requested to not be verified through this service", http.StatusBadRequest)
+				return
+			}
+		}
 
 		// verify externally
 		fmt.Println("Validating with external service")
