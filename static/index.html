@@ -38,6 +38,7 @@
             <option value="javachamps">Java Champions</option>
             <option value="mvp">Microsoft Most Valuable Professional</option>
             <option value="rd">Microsoft Regional Directors</option>
+            <option value="oracleace">Oracle ACE</option>
         </select>
         <div class="left"><small class="text-muted">Select the source for verifying you.</small></div>
         <label for="input" class="sr-only">Verification ID</label>
@@ -179,6 +180,7 @@
                 const stats = Object.entries(statsJson);
                 const select = document.getElementById("selectSource");
                 const options = select.options;
+                let total = 0;
                 let statsHtml = "";
                 stats.forEach(([key, value]) => {
                     for (let i = 0; i < options.length; i++) {
@@ -188,7 +190,9 @@
                         }
                     }
                     statsHtml += `${key}: ${value}<br>`;
+                    total += value;
                 });
+                statsHtml += `Total: ${total}`;
                 statsContainer.innerHTML = statsHtml;
             } catch (error) {
                 console.error(error.message);
