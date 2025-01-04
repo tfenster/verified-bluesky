@@ -43,3 +43,5 @@ GET {{baseurl}}/admin/data/<pwd>
 ###
 # import k/v data
 POST {{baseurl}}/admin/data/<pwd>
+
+"http://localhost:4000/admin/data/<pwd>"
