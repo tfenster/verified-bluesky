@@ -1,4 +1,5 @@
 #@baseurl = https://verified-bluesky-rpu7w3bv.fermyon.app
+#@baseurl = https://verified-bluesky.germanywestcentral.cloudapp.azure.com
 @baseurl = http://localhost:3000
 
 ###
