@@ -47,3 +47,28 @@ spec:
     - hosts:
         -  verifiedbsky.net
       secretName: www-le-cust
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: root-cust-www
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: webapprouting.kubernetes.azure.com
+  rules:
+    - host: www.verifiedbsky.net
+      http:
+        paths:
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: verified-bluesky
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        -  www.verifiedbsky.net
+      secretName: www-le-cust-www
