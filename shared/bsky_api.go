@@ -109,20 +109,7 @@ type Label struct {
     Val  string    `json:"val"`
 }
 
-func StoreAndAddToBskyStarterPack(naming Naming, moduleKey string, bskyHandle string, bskyDid string, label string, accessJwt string, endpoint string) ([]ListOrStarterPackWithUrl, error) {
-	store, err := kv.OpenStore("default")
-	if err != nil {
-		return []ListOrStarterPackWithUrl{}, err
-	}
-	defer store.Close()
-
-	key := naming.Key + "-" + moduleKey
-
-	err = store.Set(key, []byte(bskyHandle))
-	if err != nil {
-		return []ListOrStarterPackWithUrl{}, err
-	}
-
+func AddToBskyStarterPacksAndList(naming Naming, moduleKey string, bskyHandle string, bskyDid string, label string, accessJwt string, endpoint string) ([]ListOrStarterPackWithUrl, error) {
 	starterPacks, err := GetStarterPacks(accessJwt, endpoint)
 	if err != nil {
 		return []ListOrStarterPackWithUrl{}, err
