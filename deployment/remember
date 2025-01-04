@@ -1,4 +1,4 @@
-$verfiedBlueskyVersion = "0.10.4"
+$verifiedBlueskyVersion = "0.10.6"
 $subscriptionId = "94670b10-08d0-4d17-bcfe-e01f701be9ff"
 $rgAndClusterName = "verified-bluesky"
 $location = "germanywestcentral"
@@ -12,11 +12,11 @@ $acrCreds = $(az acr credential show --name $acrName --resource-group $rgAndClus
 $acruser = $acrCreds.username
 $acrpwd = $acrCreds.passwords[0].value
 spin registry login -u $acruser -p $acrpwd "$($acrname).azurecr.io"
-spin registry push --build "$($acrname).azurecr.io/verified-bluesky:$verfiedBlueskyVersion"
+spin registry push --build "$($acrname).azurecr.io/verified-bluesky:$verifiedBlueskyVersion"
 
 ## initially
-# --> copy runtime-config-cosmos.toml from infra project to deployment folder --> done but later removed, also secret.yaml and the reference in spinapp.yaml! kubectl secrets still exists
-spin kube scaffold -f "$($acrname).azurecr.io/verified-bluesky:$verfiedBlueskyVersion" -c runtime-config-cosmos.toml -o spinapp.yaml
+# --> copy runtime-config-redis.toml from infra project to deployment folder
+spin kube scaffold -f "$($acrname).azurecr.io/verified-bluesky:$verifiedBlueskyVersion" -c runtime-config-redis.toml -o spinapp.yaml
 # --> extract secret to secret.yaml
 kubectl apply -f secret.yaml
 kubectl create secret generic kv-explorer-password --from-literal=password='...'
