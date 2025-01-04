@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/fermyon/spin/sdk/go/v2/kv"
 	"github.com/fermyon/spin/sdk/go/v2/variables"
 )
 
@@ -129,6 +130,13 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// store in kv store
+		err = Store(naming, m.ModuleKey, validationRequest.BskyHandle)
+		if err != nil {
+			http.Error(w, "Error storing user in k/v store: " + err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		result := []ListOrStarterPackWithUrl{}
 
 		if (verifyOnly == "true") {
@@ -149,9 +157,9 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		} else {
-			// store add to bsky starter pack
-			fmt.Println("Storing verified user and adding to Bluesky starter pack")
-			result, err = StoreAndAddToBskyStarterPack(naming, validationRequest.VerificationId, validationRequest.BskyHandle, profile.DID, m.ModuleLabel, accessJwt, endpoint)
+			// add to bsky starter pack
+			fmt.Println("Adding verified user to Bluesky starter pack")
+			result, err = AddToBskyStarterPacksAndList(naming, validationRequest.VerificationId, validationRequest.BskyHandle, profile.DID, m.ModuleLabel, accessJwt, endpoint)
 
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -191,4 +199,17 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func Store(naming Naming, moduleKey string, bskyHandle string) error {
+	fmt.Println("Storing verified user in kv store")
+	store, err := kv.OpenStore("default")
+	if err != nil {
+		return err
+	}
+	defer store.Close()
+
+	key := naming.Key + "-" + moduleKey
+
+	return store.Set(key, []byte(bskyHandle))
 }
