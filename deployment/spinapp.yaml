@@ -3,7 +3,7 @@ kind: SpinApp
 metadata:
   name: verified-bluesky
 spec:
-  image: "verifiedbluesky.azurecr.io/verified-bluesky:0.10.4"
+  image: "verifiedbluesky.azurecr.io/verified-bluesky:0.10.6"
   executor: containerd-shim-spin
   replicas: 2
   variables:
@@ -31,3 +31,5 @@ spec:
           name: bsky-password
           key: password
           optional: false
+  runtimeConfig:
+    loadFromSecret: verified-bluesky-runtime-config

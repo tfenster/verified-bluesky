@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 
 	spinhttp "github.com/fermyon/spin/sdk/go/v2/http"
 	"github.com/fermyon/spin/sdk/go/v2/kv"
@@ -128,7 +127,6 @@ func init() {
 			for _, entry := range kvEntries {
 				fmt.Println("Setting KV entry: <"+entry.Key+"> = <"+entry.Value+">")
 				err = store.Set(entry.Key, []byte(entry.Value))
-				time.Sleep(1 * time.Second)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return

@@ -1,2 +1,4 @@
 main.wasm
 .spin/
+deployment/runtime-config-redis.toml
+deployment/secret.yaml
