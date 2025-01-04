@@ -18,7 +18,7 @@ spec:
     - name: verify_only
       value: "false"
     - name: admin_mode
-      value: "true"
+      value: "false"
     - name: kv_explorer_password
       valueFrom:
         secretKeyRef:
