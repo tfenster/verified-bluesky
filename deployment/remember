@@ -26,6 +26,6 @@ kubectl create secret generic bsky-password --from-literal=password='...'
 # --> potentially adjust version in spinapp.yaml
 kubectl apply -f spinapp.yaml
 
-## initially
+## initially --> potentially adjust host in ingress.yaml
 kubectl apply -f ingress.yaml
 ## end initially
