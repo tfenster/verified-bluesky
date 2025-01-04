@@ -131,7 +131,7 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// store in kv store
-		err = Store(naming, m.ModuleKey, validationRequest.BskyHandle)
+		err = Store(naming, validationRequest.VerificationId, validationRequest.BskyHandle)
 		if err != nil {
 			http.Error(w, "Error storing user in k/v store: " + err.Error(), http.StatusInternalServerError)
 			return
