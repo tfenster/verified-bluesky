@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.10.3"
+version = "0.10.4"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -37,6 +37,30 @@ verify_only = "{{ verify_only }}"
 [component.admin.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "admin"
+watch = ["**/*.go", "go.mod"]
+
+[[trigger.http]]
+route = "/admin/data/..."
+component = "data"
+
+[component.data]
+source = "data/main.wasm"
+allowed_outbound_hosts = [
+    "https://bsky.social",
+    "https://*.bsky.network",
+    "https://verified-bluesky-rpu7w3bv.fermyon.app",
+]
+key_value_stores = ["default"]
+[component.data.variables]
+bsky_handle = "{{ bsky_handle }}"
+bsky_password = "{{ bsky_password }}"
+bsky_did = "{{ bsky_did }}"
+bsky_labeler_did = "{{ bsky_labeler_did }}"
+admin_mode = "{{ admin_mode }}"
+verify_only = "{{ verify_only }}"
+[component.data.build]
+command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
+workdir = "data"
 watch = ["**/*.go", "go.mod"]
 
 [[trigger.http]]

@@ -1,4 +1,21 @@
-POST https://verified-bluesky-rpu7w3bv.fermyon.app/validate-mvp
+#@baseurl = https://verified-bluesky-rpu7w3bv.fermyon.app
+@baseurl = http://localhost:3000
+
+###
+# get title, first and second levels 
+GET {{baseurl}}/validate-mvp/
+
+###
+# get list and starter packs
+GET {{baseurl}}/validate-mvp/Verified MVPs: AI Platform
+
+###
+# get list and starter packs
+GET {{baseurl}}/validate-rd/Verified MVPs
+
+###
+# validate
+POST {{baseurl}}/validate-mvp
 Content-Type: text/plain
 
 {
@@ -7,99 +24,24 @@ Content-Type: text/plain
 }
 
 ###
-POST http://localhost:3000/validate-mvp
-Content-Type: application/json
-
-{
-    "bskyHandle": "a",
-    "mvpId": "b"
-}
-
+# create lists and starter packs (done once per module)
+PUT {{baseurl}}/validate-mvp/
 
 ###
-POST http://localhost:3000/validate-mvp
-Content-Type: application/json
+# set labels (works only for MVPs and RDs atm!)
+PUT {{baseurl}}/admin/<pwd>
 
 {
-    "bskyHandle": "kevchant.bsky.social",
-    "verificationId": "5538c444-ef18-eb11-a813-000d3a8dfe0d"
+    "Key": "mvp-2efc9bb2-6a8c-e711-811e-3863bb36edf8",
+    "Value": "tobiasfenster.io"
 }
 
 ###
-POST http://localhost:3000/validate-mvp
-Content-Type: application/json
-
-{
-    "bskyHandle": "yannick.reekmans.be",
-    "verificationId": "7d987768-f467-e911-a983-000d3a137780"
-}
+# export k/v data
+GET {{baseurl}}/admin/data/<pwd>
 
 ###
-POST https://verified-bluesky-rpu7w3bv.fermyon.app/validate-mvp
-Content-Type: application/json
+# import k/v data
+POST {{baseurl}}/admin/data/<pwd>
 
-{
-    "bskyHandle": "markscholman.com",
-    "verificationId": "07c6fc3b-6957-e511-8102-fc15b4282e38"
-}
-
-###
-GET https://verified-bluesky-rpu7w3bv.fermyon.app/admin/<pwd>
-
-###
-PUT https://verified-bluesky-rpu7w3bv.fermyon.app/admin/<pwd>
-
-{
-    "Key": "mvp-9d148c3d-6dde-4fbf-bbc6-b2e67b27c28b",
-    "Value": "johnlokerse.dev"
-}
-###
-PUT http://localhost:3000/admin/<pwd>
-
-{
-    "Key": "mvp-4b83a423-7b0d-ed11-b83f-000d3a1036b3",
-    "Value": "hanneslowette.net"
-}
-
-###
-GET http://localhost:3000/admin/<pwd>
-
-###
-PUT http://localhost:3000/validate-rd/
-
-###
-DELETE http://localhost:3000/admin/<pwd>
-
-###
-PUT http://localhost:3000/admin/<pwd>
-Content-Type: text/plain
-
-{
-    "key": "rd-2efc9bb2-6a8c-e711-811e-3863bb36edf8",
-    "value": "tobiasfenster.io"
-}
-
-
-###
-GET http://localhost:3000/validate-mvp/
-
-###
-GET http://localhost:3000/validate-rd/
-
-###
-GET http://localhost:3000/validate-mvp/Verified MVPs: AI Platform
-
-###
-GET http://localhost:3000/validate-rd/Verified MVPs
-
-###
-GET https://mavenapi-prod.azurewebsites.net/api/mvp/UserProfiles/public/5538c444-ef18-eb11-a813-000d3a8dfe0d
-
-###
-GET https://mavenapi-prod.azurewebsites.net/api/mvp/UserProfiles/public/2efc9bb2-6a8c-e711-811e-3863bb36edf8
-
-###
-GET https://api.runevents.net/api/sessions-and-speakers/external-speakers?eventSlug=dynamicsminds-2024
-
-###
-PUT http://localhost:3000/validate-javachamps/<pwds>
+"http://localhost:4000/admin/data/<pwd>"

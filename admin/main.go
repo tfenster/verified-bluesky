@@ -88,59 +88,6 @@ func init() {
 
 			fmt.Fprintln(w, "Label ms-" + moduleKey + " set for " + kvEntry.Value)
 
-		case http.MethodGet:
-			adminMode, err := variables.Get("admin_mode")
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				return
-			}
-
-			if adminMode != "true" {
-				http.Error(w, "admin mode not enabled", http.StatusUnauthorized)
-				return
-			}
-
-			fmt.Println("Getting KV entries")
-			_, _, err = shared.LoginToBskyWithReq(r)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				return
-			}
-
-			store, err := kv.OpenStore("default")
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer store.Close()
-
-			keys, err := store.GetKeys()
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			kvEntries := make([]KVEntry, len(keys))
-			for _, key := range keys {
-				value, err := store.Get(key)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				kvEntries = append(kvEntries, KVEntry{key, string(value)})
-			}
-
-			jsonResult, err := json.Marshal(kvEntries)
-			if err != nil {
-				http.Error(w, "Error encoding result to JSON: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-
-			fmt.Fprintln(w, string(jsonResult))
-
 		case http.MethodDelete:
 			adminMode, err := variables.Get("admin_mode")
 			if err != nil {
