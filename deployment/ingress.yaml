@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: root
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: webapprouting.kubernetes.azure.com
+  rules:
+    - host: verified-bluesky.germanywestcentral.cloudapp.azure.com
+      http:
+        paths:
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: verified-bluesky
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        -  verified-bluesky.germanywestcentral.cloudapp.azure.com
+      secretName: www-le

@@ -1,0 +1,31 @@
+$verfiedBlueskyVersion = "0.10.4"
+$subscriptionId = "94670b10-08d0-4d17-bcfe-e01f701be9ff"
+$rgAndClusterName = "verified-bluesky"
+$location = "germanywestcentral"
+$acrName = $rgAndClusterName.Replace("-", "")
+
+az config set core.login_experience_v2=off
+az login
+az account set --subscription=$subscriptionId
+az aks get-credentials --resource-group $rgAndClusterName --name $rgAndClusterName --overwrite-existing
+$acrCreds = $(az acr credential show --name $acrName --resource-group $rgAndClusterName -ojson) | ConvertFrom-Json
+$acruser = $acrCreds.username
+$acrpwd = $acrCreds.passwords[0].value
+spin registry login -u $acruser -p $acrpwd "$($acrname).azurecr.io"
+spin registry push --build "$($acrname).azurecr.io/verified-bluesky:$verfiedBlueskyVersion"
+
+## initially
+# --> copy runtime-config-cosmos.toml from infra project to deployment folder --> done but later removed, also secret.yaml and the reference in spinapp.yaml! kubectl secrets still exists
+spin kube scaffold -f "$($acrname).azurecr.io/verified-bluesky:$verfiedBlueskyVersion" -c runtime-config-cosmos.toml -o spinapp.yaml
+# --> extract secret to secret.yaml
+kubectl apply -f secret.yaml
+kubectl create secret generic kv-explorer-password --from-literal=password='...'
+kubectl create secret generic bsky-password --from-literal=password='...'
+## end initially
+
+# --> potentially adjust version in spinapp.yaml
+kubectl apply -f spinapp.yaml
+
+## initially
+kubectl apply -f ingress.yaml
+## end initially
