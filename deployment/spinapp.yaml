@@ -8,7 +8,7 @@ spec:
   replicas: 2
   variables:
     - name: bsky_handle
-      value: "verifiedsky.bsky.social"
+      value: "verifiedbsky.net"
     - name: bsky_did
       value: "did:plc:px34esz3zqocesnhjoyllu7q"
     - name: bsky_labeler_did
