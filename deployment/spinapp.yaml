@@ -1,0 +1,33 @@
+apiVersion: core.spinkube.dev/v1alpha1
+kind: SpinApp
+metadata:
+  name: verified-bluesky
+spec:
+  image: "verifiedbluesky.azurecr.io/verified-bluesky:0.10.4"
+  executor: containerd-shim-spin
+  replicas: 2
+  variables:
+    - name: bsky_handle
+      value: "verifiedsky.bsky.social"
+    - name: bsky_did
+      value: "did:plc:px34esz3zqocesnhjoyllu7q"
+    - name: bsky_labeler_did
+      value: "did:plc:ar7c4by46qjdydhdevvrndac"
+    - name: kv_explorer_user
+      value: "tfenster"
+    - name: verify_only
+      value: "false"
+    - name: admin_mode
+      value: "true"
+    - name: kv_explorer_password
+      valueFrom:
+        secretKeyRef:
+          name: kv-explorer-password
+          key: password
+          optional: false
+    - name: bsky_password
+      valueFrom:
+        secretKeyRef:
+          name: bsky-password
+          key: password
+          optional: false
