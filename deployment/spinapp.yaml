@@ -3,7 +3,7 @@ kind: SpinApp
 metadata:
   name: verified-bluesky
 spec:
-  image: "verifiedbluesky.azurecr.io/verified-bluesky:v0.10.13"
+  image: "verifiedbluesky.azurecr.io/verified-bluesky:v0.10.14"
   executor: containerd-shim-spin
   replicas: 1
   variables:
