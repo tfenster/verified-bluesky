@@ -35,3 +35,11 @@ jobs:
           registry_reference: "verifiedbluesky.azurecr.io/verified-bluesky:${{ github.ref_name }}"
       - name: echo digest
         run: echo ${{ steps.push.outputs.digest }}
+      - name: Kubectl config
+        uses: actions-hub/kubectl@master
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+      - name: Kubectl apply
+        uses: actions-hub/kubectl@master
+        with:
+          args: apply -f deployment/spinapp.yaml

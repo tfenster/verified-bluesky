@@ -26,7 +26,7 @@ func init() {
 			keys, err := store.GetKeys()
 			if err != nil {
 				http.Error(w, "Error getting keys from kv store "+err.Error(), http.StatusInternalServerError)
-				return
+				panic(err)
 			}
 
 			typeCounters := make(map[string]int)
