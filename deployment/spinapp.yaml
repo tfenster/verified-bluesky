@@ -3,9 +3,9 @@ kind: SpinApp
 metadata:
   name: verified-bluesky
 spec:
-  image: "verifiedbluesky.azurecr.io/verified-bluesky:v0.10.10"
+  image: "verifiedbluesky.azurecr.io/verified-bluesky:v0.10.11"
   executor: containerd-shim-spin
-  replicas: 2
+  replicas: 1
   variables:
     - name: bsky_handle
       value: "verifiedbsky.net"
