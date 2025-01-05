@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.10.11"
+version = "0.10.12"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -228,8 +228,8 @@ component = "stats"
 [component.stats]
 source = "stats/main.wasm"
 allowed_outbound_hosts = [
-    "redis://redis-verified-bluesky.redis.cache.windows.net",
-    "rediss://redis-verified-bluesky.redis.cache.windows.net"
+    "redis://redis-verified-bluesky.redis.cache.windows.net:6380",
+    "rediss://redis-verified-bluesky.redis.cache.windows.net:6380"
 ]
 key_value_stores = ["default"]
 [component.stats.build]
