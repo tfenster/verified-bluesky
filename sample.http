@@ -13,7 +13,7 @@ GET {{baseurl}}/validate-mvp/Verified MVPs: AI Platform
 
 ###
 # get list and starter packs
-GET {{baseurl}}/validate-rd/Verified MVPs
+GET {{baseurl}}/validate-mvp/Verified MVPs
 
 ###
 # validate
@@ -26,8 +26,22 @@ Content-Type: text/plain
 }
 
 ###
-# create lists and starter packs (done once per module)
+# delete
+DELETE {{baseurl}}/validate-rd/<pwd>
+Content-Type: text/plain
+
+{
+    "bskyHandle": "tobiasfenster.io",
+    "verificationId": "2efc9bb2-6a8c-e711-811e-3863bb36edf8"
+}
+
+###
+# create lists and starter packs (done initially once per module)
 PUT {{baseurl}}/validate-mvp/
+
+###
+# get statistics
+GET {{baseurl}}/stats/
 
 ###
 # set labels (works only for MVPs and RDs atm!)
@@ -43,7 +57,7 @@ PUT {{baseurl}}/admin/<pwd>
 GET {{baseurl}}/admin/data/<pwd>
 
 ###
-# import k/v data
+# import k/v data from another backend
 POST {{baseurl}}/admin/data/<pwd>
 
 "http://localhost:4000/admin/data/<pwd>"
