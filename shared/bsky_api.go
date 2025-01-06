@@ -47,7 +47,24 @@ type ListsResponse struct {
 }
 
 type ListResponse struct {
-	List List `json:"list"`
+	List  List   `json:"list"`
+	Items []Item `json:"items"`
+	Cursor string `json:"cursor"`
+}
+
+type Item struct {
+    URI     string  `json:"uri"`
+    Subject Subject `json:"subject"`
+}
+
+type Subject struct {
+    DID          string    `json:"did"`
+    Handle       string    `json:"handle"`
+    DisplayName  string    `json:"displayName"`
+    Avatar       string    `json:"avatar"`
+    CreatedAt    time.Time `json:"createdAt"`
+    Description  string    `json:"description"`
+    IndexedAt    time.Time `json:"indexedAt"`
 }
 
 type List struct {
@@ -409,6 +426,68 @@ func AddUserToList(bskyDid string, listTitle string, lists []List, accessJwt str
 	return listUri, nil
 }
 
+func CheckOrDeleteUserOnList(listUri string, userToCheckHandle string, deleteOnMatch bool, accessJwt string, endpoint string) (bool, error) {
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return false, fmt.Errorf("Error getting bsky_did: " + err.Error())
+	}
+	fmt.Println("Check if user " + userToCheckHandle + " is on list " + listUri + ". Delete on match? " + fmt.Sprintf("%t", deleteOnMatch))
+	hasMore := 0
+	counterArg := ""
+	for hasMore < 1 {
+		url := endpoint + "/xrpc/app.bsky.graph.getList?list="+listUri+"&limit=100" + counterArg
+		resp, err := SendGet(url, accessJwt)
+		if err != nil {
+			return false, err
+		}
+
+		var response ListResponse
+		err = json.NewDecoder(resp.Body).Decode(&response)
+		if err != nil {
+			return false, err
+		}
+
+		for _, item := range response.Items {
+			if item.Subject.Handle == userToCheckHandle {
+				fmt.Println("User " + userToCheckHandle + " is on list " + listUri)
+				if (deleteOnMatch) {
+					fmt.Println("Deleting user from list")
+					err = RemoveUserFromList(bskyDid, item.URI, accessJwt, endpoint)
+					if err != nil {
+						return true, err
+					}
+				}
+				return true, nil
+			}
+		}
+
+		if response.Cursor != "" {
+			counterArg = "&cursor=" + response.Cursor
+		} else {
+			hasMore = 1
+		}
+	}
+	
+	fmt.Println("User " + userToCheckHandle + " is not on list " + listUri)
+	return false, nil
+}
+
+func RemoveUserFromList(bskyDid string, userUriToRemove string, accessJwt string, endpoint string) error {
+	fmt.Println("Removing user with uri " + userUriToRemove)
+	url := endpoint + "/xrpc/com.atproto.repo.deleteRecord"
+	rkey := userUriToRemove[strings.LastIndex(userUriToRemove, "/")+1:]
+	payload := "{ \"collection\":\"app.bsky.graph.listitem\", \"repo\":\""+bskyDid+"\", \"rkey\":\""+rkey+"\" }"
+
+	resp, err := SendPost(url, payload, accessJwt)
+	if err != nil {
+		return err
+	}
+	if (resp.StatusCode != 200) {
+		return fmt.Errorf("Error removing user from list, status code: " + fmt.Sprintf("%d", resp.StatusCode))
+	}
+	return nil
+}
+
 func CreateAllStarterPacksAndLists(naming Naming, accessJwt string, endpoint string) (string, error) {
 	starterPacks, err := GetStarterPacks(accessJwt, endpoint)
 	if err != nil {
@@ -664,17 +743,27 @@ func AddUserToStarterPackList(userToAddDid string, listUri string, starterPackUr
 		return err
 	}
 
-	url = endpoint + "/xrpc/com.atproto.repo.putRecord"
-	rkey := starterPackUri[strings.LastIndex(starterPackUri, "/")+1:]
+	err = PutRecordForStarterPack(bskyDid, starterPackUri, starterPackDescription, starterPackTitle, createdAt, listUri, timestamp, accessJwt, endpoint)
 
-	payload = "{\"repo\": \"" + bskyDid + "\",\"collection\": \"app.bsky.graph.starterpack\",\"rkey\": \"" + rkey + "\",\"record\": {\"name\": \"" + starterPackTitle + "\",\"description\": \"" + starterPackDescription + "\",\"list\": \"" + listUri + "\",\"feeds\": [],\"createdAt\": \"" + createdAt + "\",\"updatedAt\": \"" + timestamp + "\"}}"
-
-	_, err = SendPost(url, payload, accessJwt)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Added user to list successfully")
+	return nil
+}
+
+func PutRecordForStarterPack(bskyDid string, starterPackUri string, starterPackDescription string, starterPackTitle string, createdAt string, listUri string, timestamp string, accessJwt string, endpoint string) error {
+	url := endpoint + "/xrpc/com.atproto.repo.putRecord"
+	rkey := starterPackUri[strings.LastIndex(starterPackUri, "/")+1:]
+
+	payload := "{\"repo\": \"" + bskyDid + "\",\"collection\": \"app.bsky.graph.starterpack\",\"rkey\": \"" + rkey + "\",\"record\": {\"name\": \"" + starterPackTitle + "\",\"description\": \"" + starterPackDescription + "\",\"list\": \"" + listUri + "\",\"feeds\": [],\"createdAt\": \"" + createdAt + "\",\"updatedAt\": \"" + timestamp + "\"}}"
+
+	_, err := SendPost(url, payload, accessJwt)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
