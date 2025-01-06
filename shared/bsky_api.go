@@ -338,7 +338,6 @@ func GetStarterPacks(accessJwt string, endpoint string) ([]StarterPack, error) {
 }
 
 func AddUserToStarterPack(bskyHandle string, bskyDid string, starterPackTitle string, starterPackDescription string, starterPacks []StarterPack, accessJwt string, endpoint string) (string, error) {
-	// FIXME users could now be added multiple times to starter packs if one is full, make sure that doesn't happen
 	fmt.Println("Adding users to the right starter pack (title: " + starterPackTitle + ", description: " + starterPackDescription + ")")
 	var starterPackUri string
 	var starterPackListUri string
@@ -365,6 +364,14 @@ func AddUserToStarterPack(bskyHandle string, bskyDid string, starterPackTitle st
 		}
 
 		fmt.Println("Found existing starter pack with title " + starterPackTitle + " and an item count of " + fmt.Sprintf("%d", list.ListItemCount))
+		userOnList, err := CheckOrDeleteUserOnList(sp.Record.List, bskyDid, false, accessJwt, endpoint)
+		if err != nil {
+			return "", fmt.Errorf("Error checking if user is on list: " + err.Error())
+		}
+		if userOnList {
+			fmt.Println("User is already on existing starter pack")
+			return sp.URI, nil
+		}
 		if list.ListItemCount < 149 {
 			fmt.Println("Found existing starter pack with title " + starterPackTitle + " and space left")
 			starterPackUri = sp.URI
@@ -372,6 +379,7 @@ func AddUserToStarterPack(bskyHandle string, bskyDid string, starterPackTitle st
 			starterPackDescription = sp.Record.Description
 			createdAt = sp.Record.CreatedAt
 			done = true
+			break
 		} else {
 			fmt.Println("Found existing starter pack with title " + starterPackTitle + " but it's full")
 		}
@@ -426,12 +434,12 @@ func AddUserToList(bskyDid string, listTitle string, lists []List, accessJwt str
 	return listUri, nil
 }
 
-func CheckOrDeleteUserOnList(listUri string, userToCheckHandle string, deleteOnMatch bool, accessJwt string, endpoint string) (bool, error) {
+func CheckOrDeleteUserOnList(listUri string, userToCheckHandleOrDid string, deleteOnMatch bool, accessJwt string, endpoint string) (bool, error) {
 	bskyDid, err := variables.Get("bsky_did")
 	if err != nil {
 		return false, fmt.Errorf("Error getting bsky_did: " + err.Error())
 	}
-	fmt.Println("Check if user " + userToCheckHandle + " is on list " + listUri + ". Delete on match? " + fmt.Sprintf("%t", deleteOnMatch))
+	fmt.Println("Check if user " + userToCheckHandleOrDid + " is on list " + listUri + ". Delete on match? " + fmt.Sprintf("%t", deleteOnMatch))
 	hasMore := 0
 	counterArg := ""
 	for hasMore < 1 {
@@ -448,8 +456,8 @@ func CheckOrDeleteUserOnList(listUri string, userToCheckHandle string, deleteOnM
 		}
 
 		for _, item := range response.Items {
-			if item.Subject.Handle == userToCheckHandle {
-				fmt.Println("User " + userToCheckHandle + " is on list " + listUri)
+			if (item.Subject.Handle == userToCheckHandleOrDid || item.Subject.DID == userToCheckHandleOrDid) {
+				fmt.Println("User " + userToCheckHandleOrDid + " is on list " + listUri)
 				if (deleteOnMatch) {
 					fmt.Println("Deleting user from list")
 					err = RemoveUserFromList(bskyDid, item.URI, accessJwt, endpoint)
@@ -468,7 +476,7 @@ func CheckOrDeleteUserOnList(listUri string, userToCheckHandle string, deleteOnM
 		}
 	}
 	
-	fmt.Println("User " + userToCheckHandle + " is not on list " + listUri)
+	fmt.Println("User " + userToCheckHandleOrDid + " is not on list " + listUri)
 	return false, nil
 }
 
