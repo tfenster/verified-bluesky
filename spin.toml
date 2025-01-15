@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.12.1"
+version = "0.13.0"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -22,10 +22,7 @@ component = "admin"
 
 [component.admin]
 source = "admin/main.wasm"
-allowed_outbound_hosts = [
-    "https://bsky.social",
-    "https://*.bsky.network",
-]
+allowed_outbound_hosts = ["https://bsky.social", "https://*.bsky.network"]
 key_value_stores = ["default"]
 [component.admin.variables]
 bsky_handle = "{{ bsky_handle }}"
@@ -229,7 +226,7 @@ component = "stats"
 source = "stats/main.wasm"
 allowed_outbound_hosts = [
     "redis://redis-verified-bluesky.redis.cache.windows.net:6380",
-    "rediss://redis-verified-bluesky.redis.cache.windows.net:6380"
+    "rediss://redis-verified-bluesky.redis.cache.windows.net:6380",
 ]
 key_value_stores = ["default"]
 [component.stats.build]
@@ -281,4 +278,27 @@ verify_only = "{{ verify_only }}"
 [component.validate-cttt.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-cttt"
+watch = ["**/*.go", "go.mod"]
+
+[[trigger.http]]
+route = "/validate-colorcloud/..."
+component = "validate-colorcloud"
+
+[component.validate-colorcloud]
+source = "validate-colorcloud/main.wasm"
+allowed_outbound_hosts = [
+    "https://bsky.social",
+    "https://*.bsky.network",
+    "https://sessionize.com",
+]
+key_value_stores = ["default"]
+[component.validate-colorcloud.variables]
+bsky_handle = "{{ bsky_handle }}"
+bsky_password = "{{ bsky_password }}"
+bsky_did = "{{ bsky_did }}"
+bsky_labeler_did = "{{ bsky_labeler_did }}"
+verify_only = "{{ verify_only }}"
+[component.validate-colorcloud.build]
+command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
+workdir = "validate-colorcloud"
 watch = ["**/*.go", "go.mod"]
