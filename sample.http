@@ -37,7 +37,7 @@ Content-Type: text/plain
 
 ###
 # create lists and starter packs (done initially once per module)
-PUT {{baseurl}}/validate-mvp/
+PUT {{baseurl}}/validate-colorcloud/<pwd>>
 
 ###
 # get statistics
