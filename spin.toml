@@ -22,7 +22,10 @@ component = "admin"
 
 [component.admin]
 source = "admin/main.wasm"
-allowed_outbound_hosts = ["https://bsky.social", "https://*.bsky.network"]
+allowed_outbound_hosts = [
+    "https://bsky.social",
+    "https://*.bsky.network",
+]
 key_value_stores = ["default"]
 [component.admin.variables]
 bsky_handle = "{{ bsky_handle }}"
@@ -226,7 +229,7 @@ component = "stats"
 source = "stats/main.wasm"
 allowed_outbound_hosts = [
     "redis://redis-verified-bluesky.redis.cache.windows.net:6380",
-    "rediss://redis-verified-bluesky.redis.cache.windows.net:6380",
+    "rediss://redis-verified-bluesky.redis.cache.windows.net:6380"
 ]
 key_value_stores = ["default"]
 [component.stats.build]
