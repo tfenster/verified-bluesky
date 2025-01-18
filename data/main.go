@@ -23,19 +23,8 @@ func init() {
 		switch r.Method {
 
 		case http.MethodGet:
-			adminMode, err := variables.Get("admin_mode")
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
-				return
-			}
-
-			if adminMode != "true" {
-				http.Error(w, "admin mode not enabled", http.StatusUnauthorized)
-				return
-			}
-
 			fmt.Println("Getting KV entries")
-			_, _, err = shared.LoginToBskyWithReq(r)
+			_, _, err := shared.LoginToBskyWithReq(r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
@@ -77,7 +66,7 @@ func init() {
 			w.WriteHeader(http.StatusOK)
 
 			fmt.Fprintln(w, string(jsonResult))
-		
+
 		case http.MethodPost:
 			adminMode, err := variables.Get("admin_mode")
 			if err != nil {
@@ -106,7 +95,7 @@ func init() {
 
 			resp, err := shared.SendGet(backendUrl, "")
 			if err != nil {
-				http.Error(w, "Error getting data from backend URL " + backendUrl + ": " + err.Error(), http.StatusInternalServerError)
+				http.Error(w, "Error getting data from backend URL "+backendUrl+": "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 
@@ -125,7 +114,7 @@ func init() {
 			defer store.Close()
 
 			for _, entry := range kvEntries {
-				fmt.Println("Setting KV entry: <"+entry.Key+"> = <"+entry.Value+">")
+				fmt.Println("Setting KV entry: <" + entry.Key + "> = <" + entry.Value + ">")
 				err = store.Set(entry.Key, []byte(entry.Value))
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
