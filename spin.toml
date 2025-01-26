@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.13.4"
+version = "0.13.5"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -49,6 +49,7 @@ allowed_outbound_hosts = [
     "https://bsky.social",
     "https://*.bsky.network",
     "https://verifiedbsky.net",
+    "https://www.ars-solvendi.de",
 ]
 key_value_stores = ["default"]
 [component.data.variables]
