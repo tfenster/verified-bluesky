@@ -25,21 +25,7 @@ jobs:
         uses: fermyon/actions/spin/setup@v1
         with:
           plugins: 
-      - name: Build and push
-        id: push
-        uses: fermyon/actions/spin/push@v1
+      - name: Build and deploy verified-bluesky
+        uses: fermyon/actions/spin/deploy@v1
         with:
-          registry: verifiedbluesky.azurecr.io
-          registry_username: ${{ secrets.ACR_USERNAME }}
-          registry_password: ${{ secrets.ACR_PASSWORD }}
-          registry_reference: "verifiedbluesky.azurecr.io/verified-bluesky:${{ github.ref_name }}"
-      - name: echo digest
-        run: echo ${{ steps.push.outputs.digest }}
-      - name: Kubectl config
-        uses: actions-hub/kubectl@master
-        env:
-          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
-      - name: Kubectl apply
-        uses: actions-hub/kubectl@master
-        with:
-          args: apply -f deployment/spinapp.yaml
+          fermyon_token: ${{ secrets.FERMYON_CLOUD_TOKEN }}
