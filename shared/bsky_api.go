@@ -47,24 +47,24 @@ type ListsResponse struct {
 }
 
 type ListResponse struct {
-	List  List   `json:"list"`
-	Items []Item `json:"items"`
+	List   List   `json:"list"`
+	Items  []Item `json:"items"`
 	Cursor string `json:"cursor"`
 }
 
 type Item struct {
-    URI     string  `json:"uri"`
-    Subject Subject `json:"subject"`
+	URI     string  `json:"uri"`
+	Subject Subject `json:"subject"`
 }
 
 type Subject struct {
-    DID          string    `json:"did"`
-    Handle       string    `json:"handle"`
-    DisplayName  string    `json:"displayName"`
-    Avatar       string    `json:"avatar"`
-    CreatedAt    time.Time `json:"createdAt"`
-    Description  string    `json:"description"`
-    IndexedAt    time.Time `json:"indexedAt"`
+	DID         string    `json:"did"`
+	Handle      string    `json:"handle"`
+	DisplayName string    `json:"displayName"`
+	Avatar      string    `json:"avatar"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Description string    `json:"description"`
+	IndexedAt   time.Time `json:"indexedAt"`
 }
 
 type List struct {
@@ -109,21 +109,21 @@ type ListOrStarterPackWithUrl struct {
 }
 
 type ListAndStarterPacks struct {
-	List        ListOrStarterPackWithUrl        `json:"list"`
+	List         ListOrStarterPackWithUrl   `json:"list"`
 	StarterPacks []ListOrStarterPackWithUrl `json:"starterPacks"`
 }
 
 type ModerationRepoResponse struct {
-    Did            string          `json:"did"`
-    Handle         string          `json:"handle"`
-    Labels         []Label         `json:"labels"`
+	Did    string  `json:"did"`
+	Handle string  `json:"handle"`
+	Labels []Label `json:"labels"`
 }
 
 type Label struct {
-    Ver  int       `json:"ver"`
-    Src  string    `json:"src"`
-    Uri  string    `json:"uri"`
-    Val  string    `json:"val"`
+	Ver int    `json:"ver"`
+	Src string `json:"src"`
+	Uri string `json:"uri"`
+	Val string `json:"val"`
 }
 
 func AddToBskyStarterPacksAndList(naming Naming, moduleKey string, bskyHandle string, bskyDid string, label string, accessJwt string, endpoint string) ([]ListOrStarterPackWithUrl, error) {
@@ -218,12 +218,12 @@ func LoginToBsky() (string, string, error) {
 	if err != nil && err.Error() != "no such key" {
 		return "", "", err
 	}
-	if (accessJwtFromStore != nil && string(accessJwtFromStore) != "") {
-		fmt.Println("Check if accessJwt is still valid")
+	if accessJwtFromStore != nil && string(accessJwtFromStore) != "" {
+		// fmt.Println("Check if accessJwt is still valid")
 		url := "https://bsky.social/xrpc/com.atproto.server.getSession"
-		sessionResponse, err := SendGet(url, string(accessJwtFromStore))
+		sessionResponse, err := SendGetLogConfigurable(url, string(accessJwtFromStore), true)
 		if err == nil && sessionResponse.StatusCode == 200 {
-			fmt.Println("AccessJwt is still valid")
+			// fmt.Println("AccessJwt is still valid")
 			endpointFromStore, err := store.Get("endpoint")
 			if err != nil {
 				return "", "", err
@@ -443,7 +443,7 @@ func CheckOrDeleteUserOnList(listUri string, userToCheckHandleOrDid string, dele
 	hasMore := 0
 	counterArg := ""
 	for hasMore < 1 {
-		url := endpoint + "/xrpc/app.bsky.graph.getList?list="+listUri+"&limit=100" + counterArg
+		url := endpoint + "/xrpc/app.bsky.graph.getList?list=" + listUri + "&limit=100" + counterArg
 		resp, err := SendGet(url, accessJwt)
 		if err != nil {
 			return false, err
@@ -456,9 +456,9 @@ func CheckOrDeleteUserOnList(listUri string, userToCheckHandleOrDid string, dele
 		}
 
 		for _, item := range response.Items {
-			if (item.Subject.Handle == userToCheckHandleOrDid || item.Subject.DID == userToCheckHandleOrDid) {
+			if item.Subject.Handle == userToCheckHandleOrDid || item.Subject.DID == userToCheckHandleOrDid {
 				fmt.Println("User " + userToCheckHandleOrDid + " is on list " + listUri)
-				if (deleteOnMatch) {
+				if deleteOnMatch {
 					fmt.Println("Deleting user from list")
 					err = RemoveUserFromList(bskyDid, item.URI, accessJwt, endpoint)
 					if err != nil {
@@ -475,7 +475,7 @@ func CheckOrDeleteUserOnList(listUri string, userToCheckHandleOrDid string, dele
 			hasMore = 1
 		}
 	}
-	
+
 	fmt.Println("User " + userToCheckHandleOrDid + " is not on list " + listUri)
 	return false, nil
 }
@@ -484,13 +484,13 @@ func RemoveUserFromList(bskyDid string, userUriToRemove string, accessJwt string
 	fmt.Println("Removing user with uri " + userUriToRemove)
 	url := endpoint + "/xrpc/com.atproto.repo.deleteRecord"
 	rkey := userUriToRemove[strings.LastIndex(userUriToRemove, "/")+1:]
-	payload := "{ \"collection\":\"app.bsky.graph.listitem\", \"repo\":\""+bskyDid+"\", \"rkey\":\""+rkey+"\" }"
+	payload := "{ \"collection\":\"app.bsky.graph.listitem\", \"repo\":\"" + bskyDid + "\", \"rkey\":\"" + rkey + "\" }"
 
 	resp, err := SendPost(url, payload, accessJwt)
 	if err != nil {
 		return err
 	}
-	if (resp.StatusCode != 200) {
+	if resp.StatusCode != 200 {
 		return fmt.Errorf("Error removing user from list, status code: " + fmt.Sprintf("%d", resp.StatusCode))
 	}
 	return nil
@@ -840,7 +840,7 @@ func RespondWithStarterPacksAndListsForTitle(title string, w http.ResponseWriter
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 	}
-	
+
 	matchingList := ListOrStarterPackWithUrl{}
 	allLists, err := GetLists(accessJwt, endpoint)
 	if err != nil {
@@ -1019,11 +1019,21 @@ func SendPostWithHeaders(url string, payload string, accessJwt string, additiona
 }
 
 func SendGet(url string, accessJwt string) (*http.Response, error) {
-	return SendGetWithHeader(url, accessJwt, map[string]string{})
+	return SendGetWithHeaderLogConfigurable(url, accessJwt, map[string]string{}, false)
+}
+
+func SendGetLogConfigurable(url string, accessJwt string, noLog bool) (*http.Response, error) {
+	return SendGetWithHeaderLogConfigurable(url, accessJwt, map[string]string{}, noLog)
 }
 
 func SendGetWithHeader(url string, accessJwt string, additionalHeaders map[string]string) (*http.Response, error) {
-	fmt.Println("Sending GET request to " + url)
+	return SendGetWithHeaderLogConfigurable(url, accessJwt, additionalHeaders, false)
+}
+
+func SendGetWithHeaderLogConfigurable(url string, accessJwt string, additionalHeaders map[string]string, noLog bool) (*http.Response, error) {
+	if !noLog {
+		fmt.Println("Sending GET request to " + url)
+	}
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Error creating GET request: " + err.Error())

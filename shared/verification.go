@@ -13,14 +13,14 @@ import (
 )
 
 type ModuleSpecifics struct {
-	ModuleKey          string
-	ModuleName         string
-	ModuleNameShortened string
-	ModuleLabel		string
-	ExplanationText	string
-	VerificationFunc  func(verificationId string, bskyHandle string) (bool, error)
-	NamingFunc        func(m ModuleSpecifics, verificationId string) (Naming, error)
-	FirstAndSecondLevel map[string][]string
+	ModuleKey            string
+	ModuleName           string
+	ModuleNameShortened  string
+	ModuleLabel          string
+	ExplanationText      string
+	VerificationFunc     func(verificationId string, bskyHandle string) (bool, error)
+	NamingFunc           func(m ModuleSpecifics, verificationId string) (Naming, error)
+	FirstAndSecondLevel  map[string][]string
 	Level1TranslationMap map[string]string
 	Level2TranslationMap map[string]string
 }
@@ -43,7 +43,7 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 		if lastSlash > 0 {
 			title := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
 			if title != "" {
-				if (title == "verificationText") {
+				if title == "verificationText" {
 					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusOK)
 					fmt.Fprintln(w, m.ExplanationText)
@@ -61,8 +61,8 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		
-		if (verifyOnly == "true") {
+
+		if verifyOnly == "true" {
 			http.Error(w, "Method not allowed in verify_only mode", http.StatusMethodNotAllowed)
 			return
 		}
@@ -90,7 +90,7 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 		// check if bsky handle is blacklisted
 		for _, blacklistedHandle := range bskyHandleBlacklist {
 			if validationRequest.BskyHandle == blacklistedHandle {
-				http.Error(w, "The Bluesky handle " + validationRequest.BskyHandle + " has requested to not be verified through this service", http.StatusBadRequest)
+				http.Error(w, "The Bluesky handle "+validationRequest.BskyHandle+" has requested to not be verified through this service", http.StatusBadRequest)
 				return
 			}
 		}
@@ -102,9 +102,8 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Verification failed: "+err.Error(), http.StatusBadRequest)
 			return
 		}
-		
+
 		// get bsky profile
-		fmt.Println("Getting Bluesky profile for handle " + validationRequest.BskyHandle)
 		accessJwt, endpoint, err := LoginToBsky()
 
 		profile, err := GetProfile(validationRequest.BskyHandle, accessJwt, endpoint)
@@ -126,26 +125,26 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 		// store in kv store
 		err = Store(naming, validationRequest.VerificationId, validationRequest.BskyHandle)
 		if err != nil {
-			http.Error(w, "Error storing user in k/v store: " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error storing user in k/v store: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		result := []ListOrStarterPackWithUrl{}
 
-		if (verifyOnly == "true") {
+		if verifyOnly == "true" {
 			result = append(result, ListOrStarterPackWithUrl{
 				Title: naming.Title,
-				URL: "",
+				URL:   "",
 			})
 			for firstLevel, secondLevels := range naming.FirstAndSecondLevel {
 				result = append(result, ListOrStarterPackWithUrl{
 					Title: firstLevel.Title,
-					URL: "",
+					URL:   "",
 				})
 				for _, secondLevel := range secondLevels {
 					result = append(result, ListOrStarterPackWithUrl{
 						Title: secondLevel.Title,
-						URL: "",
+						URL:   "",
 					})
 				}
 			}
@@ -170,10 +169,9 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 
 		fmt.Fprintln(w, string(jsonResult))
-		
 
 	case http.MethodPut:
-		if (verifyOnly == "true") {
+		if verifyOnly == "true" {
 			http.Error(w, "Method not allowed in verify_only mode", http.StatusMethodNotAllowed)
 			return
 		}
@@ -191,7 +189,7 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case http.MethodDelete:
-		if (verifyOnly == "true") {
+		if verifyOnly == "true" {
 			http.Error(w, "Method not allowed in verify_only mode", http.StatusMethodNotAllowed)
 			return
 		}
@@ -200,7 +198,7 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		
+
 		validationRequest, err := GetBody(r, w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -209,16 +207,16 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 
 		naming, err := SetupNamingStructure(m)
 		if err != nil {
-			http.Error(w, "Error setting up naming structure: " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error setting up naming structure: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		isInStore, err := CheckStore(naming, validationRequest.VerificationId, validationRequest.BskyHandle)
 		if err != nil {
-			http.Error(w, "Error checking if User is in store: " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error checking if User is in store: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if ! isInStore {
+		if !isInStore {
 			http.Error(w, "User not found in store", http.StatusBadRequest)
 			return
 		}
@@ -227,19 +225,19 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 
 		allLists, err := GetLists(accessJwt, endpoint)
 		if err != nil {
-			http.Error(w, "Error getting lists: " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error getting lists: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		allStarterPacks, err := GetStarterPacks(accessJwt, endpoint)
 		if err != nil {
-			http.Error(w, "Error getting starter packs: " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error getting starter packs: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		name := naming.Title
 		err = DeleteUserFromStarterPacksAndListWithName(name, validationRequest.BskyHandle, allLists, allStarterPacks, accessJwt, endpoint)
 		if err != nil {
-			http.Error(w, "Error deleting user "+validationRequest.BskyHandle+" from starter packs and lists "+name+" (root level): " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error deleting user "+validationRequest.BskyHandle+" from starter packs and lists "+name+" (root level): "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -247,7 +245,7 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 			name = firstLevel.Title
 			err = DeleteUserFromStarterPacksAndListWithName(name, validationRequest.BskyHandle, allLists, allStarterPacks, accessJwt, endpoint)
 			if err != nil {
-				http.Error(w, "Error deleting user "+validationRequest.BskyHandle+" from starter packs and lists "+name+" (first level): " + err.Error(), http.StatusInternalServerError)
+				http.Error(w, "Error deleting user "+validationRequest.BskyHandle+" from starter packs and lists "+name+" (first level): "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 
@@ -255,7 +253,7 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 				name = secondLevel.Title
 				err = DeleteUserFromStarterPacksAndListWithName(name, validationRequest.BskyHandle, allLists, allStarterPacks, accessJwt, endpoint)
 				if err != nil {
-					http.Error(w, "Error deleting user "+validationRequest.BskyHandle+" from starter packs and lists "+name+" (second level): " + err.Error(), http.StatusInternalServerError)
+					http.Error(w, "Error deleting user "+validationRequest.BskyHandle+" from starter packs and lists "+name+" (second level): "+err.Error(), http.StatusInternalServerError)
 					return
 				}
 			}
@@ -263,7 +261,7 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 
 		err = DeleteFromStore(naming, validationRequest.VerificationId)
 		if err != nil {
-			http.Error(w, "Error deleting user from k/v store: " + err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Error deleting user from k/v store: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -362,7 +360,7 @@ func DeleteFromStore(naming Naming, moduleKey string) error {
 	key := naming.Key + "-" + moduleKey
 
 	exists, err := store.Exists(key)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
