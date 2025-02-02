@@ -11,26 +11,26 @@ import (
 )
 
 type Social struct {
-    Twitter    string `yaml:"twitter,omitempty"`
-    Mastodon   string `yaml:"mastodon,omitempty"`
-    Bluesky    string `yaml:"bluesky,omitempty"`
-    Youtube    string `yaml:"youtube,omitempty"`
-    Linkedin   string `yaml:"linkedin,omitempty"`
-    Github     string `yaml:"github,omitempty"`
-    Website    string `yaml:"website,omitempty"`
-    Sessionize string `yaml:"sessionize,omitempty"`
-    Xing       string `yaml:"xing,omitempty"`
+	Twitter    string `yaml:"twitter,omitempty"`
+	Mastodon   string `yaml:"mastodon,omitempty"`
+	Bluesky    string `yaml:"bluesky,omitempty"`
+	Youtube    string `yaml:"youtube,omitempty"`
+	Linkedin   string `yaml:"linkedin,omitempty"`
+	Github     string `yaml:"github,omitempty"`
+	Website    string `yaml:"website,omitempty"`
+	Sessionize string `yaml:"sessionize,omitempty"`
+	Xing       string `yaml:"xing,omitempty"`
 }
 
 type Member struct {
-    Name    string   `yaml:"name"`
-    Social  Social   `yaml:"social"`
-    Avatar  string   `yaml:"avatar"`
-    Status  []string `yaml:"status,omitempty"`
+	Name   string   `yaml:"name"`
+	Social Social   `yaml:"social"`
+	Avatar string   `yaml:"avatar"`
+	Status []string `yaml:"status,omitempty"`
 }
 
 type JCResponse struct {
-    Members []Member `yaml:"members"`
+	Members []Member `yaml:"members"`
 }
 
 func init() {
@@ -51,21 +51,19 @@ func init() {
 			resp, err := shared.SendGet(url, "")
 			if err != nil {
 				fmt.Println("Error fetching the URL: " + err.Error())
-				return false, fmt.Errorf("Error fetching the Java Champion list: "+err.Error())
+				return false, fmt.Errorf("Error fetching the Java Champion list: " + err.Error())
 			}
 			respBody, err := io.ReadAll(resp.Body)
 			if err != nil {
-				return false, fmt.Errorf("Error reading response body: "+err.Error())
+				return false, fmt.Errorf("Error reading response body: " + err.Error())
 			}
 			defer resp.Body.Close()
-
-			fmt.Println(string(respBody))
 
 			var response JCResponse
 			err = yaml.Unmarshal(respBody, &response)
 			if err != nil {
 				fmt.Println("Error decoding Java Champion YAML: " + err.Error())
-				return false, fmt.Errorf("Error decoding Java Champion YAML: "+err.Error())
+				return false, fmt.Errorf("Error decoding Java Champion YAML: " + err.Error())
 			}
 
 			// check if bsky handle is in JC profile
@@ -73,7 +71,7 @@ func init() {
 			for _, member := range response.Members {
 				if member.Name == verificationId {
 					fmt.Print("Java Champion with name '" + verificationId + "' found\n")
-					if member.Social.Bluesky == "https://bsky.app/profile/" + bskyHandle {
+					if member.Social.Bluesky == "https://bsky.app/profile/"+bskyHandle {
 						fmt.Print("Java Champion with name '" + verificationId + "' and handle '" + bskyHandle + "' found\n")
 						found = true
 						return true, nil

@@ -18,7 +18,7 @@ GET {{baseurl}}/validate-mvp/Verified MVPs
 ###
 # validate
 POST {{baseurl}}/validate-mvp
-Content-Type: text/plain
+Content-Type: text/json
 
 {
     "bskyHandle": "tobiasfenster.io",
@@ -60,4 +60,98 @@ GET {{baseurl}}/admin/data/<pwd>
 # import k/v data from another backend
 POST {{baseurl}}/admin/data/<pwd>
 
-"http://localhost:4000/admin/data/<pwd>"
+"https://www.ars-solvendi.de/export.json"
+
+###
+# test all
+@testurl = {{baseurl}}/validate-
+
+# CNCF Ambassador
+POST {{testurl}}cncfamb
+Content-Type: text/json
+
+{
+    "bskyHandle": "calummurray.bsky.social",
+    "verificationId": "calum-murray"
+}
+
+###
+# Cloud Technology Townhall Tallinn speaker
+POST {{testurl}}cttt
+Content-Type: text/json
+
+{
+    "bskyHandle": "katerinach.bsky.social",
+    "verificationId": "Katerina Chernevskaya"
+}
+
+###
+# ColorCloud speaker
+POST {{testurl}}colorcloud
+Content-Type: text/json
+
+{
+    "bskyHandle": "paulinekolde.info",
+    "verificationId": "Pauline Kolde"
+}
+
+###
+# DynamicsMinds speaker
+POST {{testurl}}dynamicsminds
+Content-Type: text/json
+
+{
+    "bskyHandle": "tobiasfenster.io",
+    "verificationId": "Tobias Fenster"
+}
+
+###
+# GitHub Star
+POST {{testurl}}ghstar
+Content-Type: text/json
+
+{
+    "bskyHandle": "eliostruyf.com",
+    "verificationId": "estruyf"
+}
+
+###
+# Java Champion
+POST {{testurl}}javachamps
+Content-Type: text/json
+
+{
+    "bskyHandle": "tomcools.be",
+    "verificationId": "Tom Cools"
+}
+
+###
+# Microsoft MVP
+POST {{testurl}}mvp
+Content-Type: text/json
+
+{
+    "bskyHandle": "ivarribas.bsky.social",
+    "verificationId": "82ccb254-c755-ed11-9561-000d3a197333"
+}
+
+###
+# Microsoft RD
+POST {{testurl}}rd
+Content-Type: text/json
+
+{
+    "bskyHandle": "fiddi.ch",
+    "verificationId": "5e5388e5-2153-e511-810d-fc15b4285d7c"
+}
+
+###
+# Oracle ACE
+POST {{testurl}}oracleace
+Content-Type: text/json
+
+{
+    "bskyHandle": "mthmulders.bsky.social",
+    "verificationId": "mthmulders"
+}
+
