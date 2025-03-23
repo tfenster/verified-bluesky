@@ -37,7 +37,7 @@ Content-Type: text/plain
 
 ###
 # create lists and starter packs (done initially once per module)
-PUT {{baseurl}}/validate-colorcloud/<pwd>>
+PUT {{baseurl}}/validate-colorcloud/<pwd>
 
 ###
 # get statistics
@@ -155,3 +155,12 @@ Content-Type: text/json
     "verificationId": "mthmulders"
 }
 
+###
+# AWS Hero
+POST {{testurl}}awshero
+Content-Type: text/json
+
+{
+    "bskyHandle": "eminalemdar.bsky.social",
+    "verificationId": "emin-alemdar"
+}

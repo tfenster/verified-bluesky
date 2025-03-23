@@ -306,3 +306,26 @@ verify_only = "{{ verify_only }}"
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-colorcloud"
 watch = ["**/*.go", "go.mod"]
+
+[[trigger.http]]
+route = "/validate-awshero/..."
+component = "validate-awshero"
+
+[component.validate-awshero]
+source = "validate-awshero/main.wasm"
+allowed_outbound_hosts = [
+    "https://bsky.social",
+    "https://*.bsky.network",
+    "https://aws.amazon.com",
+]
+key_value_stores = ["default"]
+[component.validate-awshero.variables]
+bsky_handle = "{{ bsky_handle }}"
+bsky_password = "{{ bsky_password }}"
+bsky_did = "{{ bsky_did }}"
+bsky_labeler_did = "{{ bsky_labeler_did }}"
+verify_only = "{{ verify_only }}"
+[component.validate-awshero.build]
+command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
+workdir = "validate-awshero"
+watch = ["**/*.go", "go.mod"]
