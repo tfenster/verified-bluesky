@@ -164,3 +164,13 @@ Content-Type: text/json
     "bskyHandle": "eminalemdar.bsky.social",
     "verificationId": "emin-alemdar"
 }
+
+###
+# IBM Champion
+POST {{testurl}}ibmchamp
+Content-Type: text/json
+
+{
+    "bskyHandle": "richard.fichtner.dev",
+    "verificationId": "rfichtner"
+}
