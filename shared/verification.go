@@ -27,9 +27,7 @@ type ModuleSpecifics struct {
 
 func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 	// list of bsky handles that are blacklisted, which means request to verify them will be rejected
-	bskyHandleBlacklist := []string{
-		"khmarbaise.bsky.social",
-	}
+	bskyHandleBlacklist := []string{}
 
 	verifyOnly, err := variables.Get("verify_only")
 	if err != nil {
