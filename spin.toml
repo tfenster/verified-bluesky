@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.15.1"
+version = "0.16.0"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -351,4 +351,27 @@ verify_only = "{{ verify_only }}"
 [component.validate-ibmchamp.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-ibmchamp"
+watch = ["**/*.go", "go.mod"]
+
+[[trigger.http]]
+route = "/validate-nordicsummit/..."
+component = "validate-nordicsummit"
+
+[component.validate-nordicsummit]
+source = "validate-nordicsummit/main.wasm"
+allowed_outbound_hosts = [
+    "https://bsky.social",
+    "https://*.bsky.network",
+    "https://sessionize.com",
+]
+key_value_stores = ["default"]
+[component.validate-nordicsummit.variables]
+bsky_handle = "{{ bsky_handle }}"
+bsky_password = "{{ bsky_password }}"
+bsky_did = "{{ bsky_did }}"
+bsky_labeler_did = "{{ bsky_labeler_did }}"
+verify_only = "{{ verify_only }}"
+[component.validate-nordicsummit.build]
+command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
+workdir = "validate-nordicsummit"
 watch = ["**/*.go", "go.mod"]
