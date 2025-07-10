@@ -24,20 +24,20 @@ func init() {
 		ModuleName:           "Oracle ACEs",
 		ModuleNameShortened:  "Oracle ACEs",
 		ModuleLabel:          "oracleace",
-		ExplanationText:      "This is your ID in the Oracle ACEs list. This is the last part of the URL after https://apexapps.oracle.com/apex/ace/profile/. For this to work, you need to have the link to your Bluesky profile in the Social links on your Oracle ACE profile.",
+		ExplanationText:      "This is your ID in the Oracle ACEs list. This is the last part of the URL after https://apexadb.oracle.com/ords/ace/profile/. For this to work, you need to have the link to your Bluesky profile in the Social links on your Oracle ACE profile.",
 		FirstAndSecondLevel:  aceLevels,
 		Level1TranslationMap: make(map[string]string),
 		Level2TranslationMap: make(map[string]string),
 		VerificationFunc: func(verificationId string, bskyHandle string) (bool, error) {
 			fmt.Println("Validating Oracle ACE with ID: " + verificationId)
-			url := "https://apexapps.oracle.com/apex/ace/profile/" + verificationId
+			url := "https://apexadb.oracle.com/ords/ace/profile/" + verificationId
 			xpathQuery := fmt.Sprintf("//a[@href='https://bsky.app/profile/%s' and @title='Bluesky']", bskyHandle)
 
 			return shared.HtmlXpathVerification(url, xpathQuery, bskyHandle)
 		},
 		NamingFunc: func(m shared.ModuleSpecifics, verificationId string) (shared.Naming, error) {
 			fmt.Println("Getting Oracle ACE Level with ID: " + verificationId)
-			url := "https://apexapps.oracle.com/apex/ace/profile/" + verificationId
+			url := "https://apexadb.oracle.com/ords/ace/profile/" + verificationId
 
 			resp, err := shared.SendGet(url, "")
 			if err != nil {
