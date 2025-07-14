@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.16.0"
+version = "0.16.1"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -246,7 +246,7 @@ component = "validate-oracleace"
 source = "validate-oracleace/main.wasm"
 allowed_outbound_hosts = [
     "https://bsky.social",
-    "https://apexapps.oracle.com",
+    "https://apexadb.oracle.com",
     "https://*.bsky.network",
 ]
 key_value_stores = ["default"]
