@@ -999,9 +999,9 @@ func RemoveLabel(label string, targetHandle string, accessJwt string, endpoint s
 
 	additionalHeaders := map[string]string{"atproto-accept-labelers": bskyLabelerDid + ";redact", "atproto-proxy": bskyDid + "#atproto_labeler"}
 
-	url := endpoint + "/xrpc/tools.ozone.moderation.getRepo?did=" + url.QueryEscape(targetProfile.DID)
+	requestURL := endpoint + "/xrpc/tools.ozone.moderation.getRepo?did=" + url.QueryEscape(targetProfile.DID)
 
-	resp, err := SendGetWithHeader(url, accessJwt, additionalHeaders)
+	resp, err := SendGetWithHeader(requestURL, accessJwt, additionalHeaders)
 	if err != nil {
 		return err
 	}
