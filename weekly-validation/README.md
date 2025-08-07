@@ -8,34 +8,47 @@ The weekly validation system ensures that verified accounts remain valid over ti
 
 1. **Weekly GitHub Workflow**: Runs every Sunday at 2:00 AM UTC
 2. **Account Retrieval**: Gets all verified accounts from the `/admin/data` endpoint
-3. **Re-validation**: Checks each account using their original verification method
-4. **Failure Tracking**: Maintains a failure count for each account
-5. **Automatic Cleanup**: Removes accounts after 4 consecutive validation failures
+3. **Re-validation**: Checks each account using their original verification method for each module
+4. **Failure Tracking**: Maintains a failure count for each account per module
+5. **Automatic Cleanup**: Removes accounts from specific modules after 4 consecutive validation failures
 
 ## Endpoints
 
 ### GET `/weekly-validation/{bskyHandle}/{password}`
 
-Checks the validation status of a specific Bluesky handle. Requires authentication via password in URL path.
+Checks the validation status of a specific Bluesky handle for all modules they're verified in. Requires authentication via password in URL path.
 
 **Response:**
 ```json
 {
   "bskyHandle": "example.bsky.social",
-  "isValid": true,
-  "failureCount": 0,
+  "moduleResults": {
+    "mvp": {
+      "moduleKey": "mvp",
+      "isValid": true,
+      "failureCount": 0,
+      "removed": false
+    },
+    "ghstar": {
+      "moduleKey": "ghstar", 
+      "isValid": false,
+      "failureCount": 2,
+      "removed": false
+    }
+  },
   "action": "none"
 }
 ```
 
 ### POST `/weekly-validation/{password}`
 
-Updates the failure count for a Bluesky handle. Requires authentication via password in URL path.
+Updates the failure count for a Bluesky handle for a specific module. Requires authentication via password in URL path.
 
 **Request:**
 ```json
 {
-  "bskyHandle": "example.bsky.social", 
+  "bskyHandle": "example.bsky.social",
+  "moduleKey": "mvp", 
   "failureCount": 1
 }
 ```
@@ -44,15 +57,24 @@ Updates the failure count for a Bluesky handle. Requires authentication via pass
 ```json
 {
   "bskyHandle": "example.bsky.social",
-  "failureCount": 1,
+  "moduleResults": {
+    "mvp": {
+      "moduleKey": "mvp",
+      "isValid": false,
+      "failureCount": 1,
+      "removed": false
+    }
+  },
   "action": "none"
 }
 ```
 
-If `failureCount` reaches 4, the response will include `"action": "removed"` and the account will be:
-- Removed from the key/value store
-- Removed from all relevant Bluesky lists and starter packs  
-- Have their verification label removed
+If `failureCount` reaches 4, the response will include `"action": "partial_removal"` and the account will be:
+- Removed from the key/value store for that specific module
+- Removed from Bluesky lists and starter packs related to that module
+- Have their verification label for that module removed
+
+Note: The account will remain verified in other modules that are still valid.
 
 ## Authentication
 

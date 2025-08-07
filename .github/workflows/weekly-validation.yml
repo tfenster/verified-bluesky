@@ -35,43 +35,50 @@ jobs:
           for handle in $accounts; do
             echo "Validating account: $handle"
             
-            # Get current validation status (with authentication)
+            # Get current validation status for all modules (with authentication)
             validation_response=$(curl -s "https://verifiedbsky.net/weekly-validation/$handle/${{ secrets.BSKY_PASSWORD }}")
             echo "Validation response: $validation_response"
             
-            # Parse the response
-            is_valid=$(echo "$validation_response" | jq -r '.isValid')
-            current_failure_count=$(echo "$validation_response" | jq -r '.failureCount')
-            
-            echo "Account $handle - Valid: $is_valid, Current failures: $current_failure_count"
-            
-            if [ "$is_valid" = "true" ]; then
-              # Account is valid, reset failure count to 0
-              echo "Account $handle is valid, resetting failure count to 0"
-              curl -s -X POST "https://verifiedbsky.net/weekly-validation/${{ secrets.BSKY_PASSWORD }}" \
-                -H "Content-Type: application/json" \
-                -d "{\"bskyHandle\": \"$handle\", \"failureCount\": 0}"
-            else
-              # Account is invalid, increment failure count
-              new_failure_count=$((current_failure_count + 1))
-              echo "Account $handle is invalid, incrementing failure count to $new_failure_count"
+            # Parse the response and process each module
+            echo "$validation_response" | jq -r '.moduleResults | to_entries[] | @base64' | while IFS= read -r module_data; do
+              module_info=$(echo "$module_data" | base64 --decode)
+              module_key=$(echo "$module_info" | jq -r '.key')
+              is_valid=$(echo "$module_info" | jq -r '.value.isValid')
+              current_failure_count=$(echo "$module_info" | jq -r '.value.failureCount')
               
-              response=$(curl -s -X POST "https://verifiedbsky.net/weekly-validation/${{ secrets.BSKY_PASSWORD }}" \
-                -H "Content-Type: application/json" \
-                -d "{\"bskyHandle\": \"$handle\", \"failureCount\": $new_failure_count}")
+              echo "Account $handle, Module $module_key - Valid: $is_valid, Current failures: $current_failure_count"
               
-              echo "Update response: $response"
-              
-              # Check if user was removed
-              action=$(echo "$response" | jq -r '.action')
-              if [ "$action" = "removed" ]; then
-                echo "⚠️ Account $handle was removed after 4 consecutive validation failures"
+              if [ "$is_valid" = "true" ]; then
+                # Module validation is valid, reset failure count to 0
+                echo "Account $handle module $module_key is valid, resetting failure count to 0"
+                curl -s -X POST "https://verifiedbsky.net/weekly-validation/${{ secrets.BSKY_PASSWORD }}" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"bskyHandle\": \"$handle\", \"moduleKey\": \"$module_key\", \"failureCount\": 0}"
               else
-                echo "Account $handle now has $new_failure_count consecutive failures"
+                # Module validation is invalid, increment failure count
+                new_failure_count=$((current_failure_count + 1))
+                echo "Account $handle module $module_key is invalid, incrementing failure count to $new_failure_count"
+                
+                response=$(curl -s -X POST "https://verifiedbsky.net/weekly-validation/${{ secrets.BSKY_PASSWORD }}" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"bskyHandle\": \"$handle\", \"moduleKey\": \"$module_key\", \"failureCount\": $new_failure_count}")
+                
+                echo "Update response: $response"
+                
+                # Check if user was removed from this module
+                action=$(echo "$response" | jq -r '.action')
+                if [ "$action" = "partial_removal" ]; then
+                  echo "⚠️ Account $handle was removed from module $module_key after 4 consecutive validation failures"
+                else
+                  echo "Account $handle module $module_key now has $new_failure_count consecutive failures"
+                fi
               fi
-            fi
+              
+              # Add a small delay between module checks to avoid rate limiting
+              sleep 1
+            done
             
-            # Add a small delay between requests to avoid rate limiting
+            # Add a delay between accounts to avoid rate limiting
             sleep 2
           done
           
@@ -85,6 +92,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Process:**" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Retrieved all verified accounts from the data store" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔍 Validated each account using their original verification method" >> $GITHUB_STEP_SUMMARY
-          echo "- 📊 Updated failure counts based on validation results" >> $GITHUB_STEP_SUMMARY
-          echo "- 🚫 Removed accounts that failed validation 4 consecutive times" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔍 Validated each account using their original verification method for each module" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Updated failure counts based on validation results per module" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚫 Removed accounts from specific modules that failed validation 4 consecutive times" >> $GITHUB_STEP_SUMMARY

@@ -15,14 +15,21 @@ import (
 
 type FailureCountRequest struct {
 	BskyHandle   string `json:"bskyHandle"`
+	ModuleKey    string `json:"moduleKey"`
 	FailureCount int    `json:"failureCount"`
 }
 
 type ValidationResult struct {
-	BskyHandle   string `json:"bskyHandle"`
+	BskyHandle    string                  `json:"bskyHandle"`
+	ModuleResults map[string]ModuleResult `json:"moduleResults"`
+	Action        string                  `json:"action"` // "none", "partial_removal", "full_removal"
+}
+
+type ModuleResult struct {
+	ModuleKey    string `json:"moduleKey"`
 	IsValid      bool   `json:"isValid"`
 	FailureCount int    `json:"failureCount"`
-	Action       string `json:"action"` // "none", "removed"
+	Removed      bool   `json:"removed"`
 }
 
 func init() {
@@ -70,68 +77,82 @@ func handleFailureCountUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	defer store.Close()
 
-	failureKey := "failure-" + request.BskyHandle
+	failureKey := fmt.Sprintf("failure-%s-%s", request.ModuleKey, request.BskyHandle)
 
-	// Update failure count
+	// Update failure count for this specific module
 	err = store.Set(failureKey, []byte(strconv.Itoa(request.FailureCount)))
 	if err != nil {
 		http.Error(w, "Error setting failure count: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	var result ValidationResult
-	result.BskyHandle = request.BskyHandle
-	result.FailureCount = request.FailureCount
-	result.Action = "none"
+	result := ValidationResult{
+		BskyHandle:    request.BskyHandle,
+		ModuleResults: make(map[string]ModuleResult),
+		Action:        "none",
+	}
 
-	// If failure count is 4, remove the user
+	// Add the updated module result
+	result.ModuleResults[request.ModuleKey] = ModuleResult{
+		ModuleKey:    request.ModuleKey,
+		IsValid:      request.FailureCount == 0,
+		FailureCount: request.FailureCount,
+		Removed:      false,
+	}
+
+	// If failure count is 4, remove the user from this specific module
 	if request.FailureCount >= 4 {
-		fmt.Printf("Removing user %s due to 4 consecutive failures\n", request.BskyHandle)
+		fmt.Printf("Removing user %s from module %s due to 4 consecutive failures\n", request.BskyHandle, request.ModuleKey)
 
-		// Find all keys for this user and remove them
+		// Find and remove the specific key for this module and user
 		keys, err := store.GetKeys()
 		if err != nil {
 			http.Error(w, "Error getting keys: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		var keysToRemove []string
+		var keyToRemove string
 		for _, key := range keys {
-			if strings.Contains(key, "-") && !strings.HasPrefix(key, "failure-") &&
+			if strings.HasPrefix(key, request.ModuleKey+"-") && !strings.HasPrefix(key, "failure-") &&
 				key != "endpoint" && key != "accessJwt" && key != "" {
 				value, err := store.Get(key)
 				if err != nil {
 					continue
 				}
 				if string(value) == request.BskyHandle {
-					keysToRemove = append(keysToRemove, key)
+					keyToRemove = key
+					break
 				}
 			}
 		}
 
-		// Remove user from all validation stores
-		for _, key := range keysToRemove {
-			fmt.Printf("Removing key %s for user %s\n", key, request.BskyHandle)
-			err = store.Delete(key)
+		if keyToRemove != "" {
+			fmt.Printf("Removing key %s for user %s from module %s\n", keyToRemove, request.BskyHandle, request.ModuleKey)
+			err = store.Delete(keyToRemove)
 			if err != nil {
-				fmt.Printf("Error deleting key %s: %v\n", key, err)
-				continue
-			}
+				fmt.Printf("Error deleting key %s: %v\n", keyToRemove, err)
+			} else {
+				// Remove from Bluesky lists and starter packs, and remove label for this module
+				err = removeFromBlueskyAndLabel(keyToRemove, request.BskyHandle)
+				if err != nil {
+					fmt.Printf("Error removing from Bluesky for key %s: %v\n", keyToRemove, err)
+				}
 
-			// Remove from Bluesky lists and starter packs, and remove label
-			err = removeFromBlueskyAndLabel(key, request.BskyHandle)
-			if err != nil {
-				fmt.Printf("Error removing from Bluesky for key %s: %v\n", key, err)
+				result.ModuleResults[request.ModuleKey] = ModuleResult{
+					ModuleKey:    request.ModuleKey,
+					IsValid:      false,
+					FailureCount: request.FailureCount,
+					Removed:      true,
+				}
+				result.Action = "partial_removal"
 			}
 		}
 
-		// Remove failure count key
+		// Remove failure count key for this module
 		err = store.Delete(failureKey)
 		if err != nil {
 			fmt.Printf("Error deleting failure key: %v\n", err)
 		}
-
-		result.Action = "removed"
 	}
 
 	// Return response
@@ -170,30 +191,21 @@ func handleValidationCheck(w http.ResponseWriter, r *http.Request) {
 	}
 	defer store.Close()
 
-	// Get current failure count
-	failureKey := "failure-" + bskyHandle
-	failureCount := 0
-	if exists, _ := store.Exists(failureKey); exists {
-		if failureData, err := store.Get(failureKey); err == nil {
-			if count, err := strconv.Atoi(string(failureData)); err == nil {
-				failureCount = count
-			}
-		}
-	}
-
 	result := ValidationResult{
-		BskyHandle:   bskyHandle,
-		IsValid:      false,
-		FailureCount: failureCount,
-		Action:       "none",
+		BskyHandle:    bskyHandle,
+		ModuleResults: make(map[string]ModuleResult),
+		Action:        "none",
 	}
 
-	// Find the user's verification entries
+	// Find all verification entries for this user
 	keys, err := store.GetKeys()
 	if err != nil {
 		http.Error(w, "Error getting keys: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Track which modules this user has verification entries for
+	userModules := make(map[string]string) // moduleKey -> verificationId
 
 	for _, key := range keys {
 		if strings.Contains(key, "-") && !strings.HasPrefix(key, "failure-") &&
@@ -203,19 +215,37 @@ func handleValidationCheck(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			if string(value) == bskyHandle {
-				// Found a verification entry, check if it's still valid
 				parts := strings.Split(key, "-")
 				if len(parts) >= 2 {
 					moduleKey := parts[0]
 					verificationId := strings.Join(parts[1:], "-")
-
-					isValid := checkValidation(moduleKey, verificationId, bskyHandle)
-					if isValid {
-						result.IsValid = true
-						break
-					}
+					userModules[moduleKey] = verificationId
 				}
 			}
+		}
+	}
+
+	// Check validation status and failure counts for each module
+	for moduleKey, verificationId := range userModules {
+		// Get current failure count for this module
+		failureKey := fmt.Sprintf("failure-%s-%s", moduleKey, bskyHandle)
+		failureCount := 0
+		if exists, _ := store.Exists(failureKey); exists {
+			if failureData, err := store.Get(failureKey); err == nil {
+				if count, err := strconv.Atoi(string(failureData)); err == nil {
+					failureCount = count
+				}
+			}
+		}
+
+		// Check if validation is still valid
+		isValid := checkValidation(moduleKey, verificationId, bskyHandle)
+
+		result.ModuleResults[moduleKey] = ModuleResult{
+			ModuleKey:    moduleKey,
+			IsValid:      isValid,
+			FailureCount: failureCount,
+			Removed:      false,
 		}
 	}
 
