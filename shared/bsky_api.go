@@ -1024,18 +1024,18 @@ func RemoveLabel(label string, targetHandle string, accessJwt string, endpoint s
 		fmt.Println("Label does not exist")
 		return nil
 	} else {
-		url = endpoint + "/xrpc/tools.ozone.moderation.emitEvent"
+		requestURL = endpoint + "/xrpc/tools.ozone.moderation.emitEvent"
 
 		payload := "{\"subject\": {\"$type\": \"com.atproto.admin.defs#repoRef\",\"did\": \"" + targetProfile.DID + "\"},\"createdBy\": \"" + bskyDid + "\",\"subjectBlobCids\": [],\"event\": {\"$type\": \"tools.ozone.moderation.defs#modEventLabel\",\"createLabelVals\": [],\"negateLabelVals\": [\"" + label + "\"]}}"
 
-		_, err = SendPostWithHeaders(url, payload, accessJwt, additionalHeaders)
+		_, err = SendPostWithHeaders(requestURL, payload, accessJwt, additionalHeaders)
 		if err != nil {
 			return err
 		}
 
 		payload = "{\"subject\": {\"$type\": \"com.atproto.admin.defs#repoRef\",\"did\": \"" + targetProfile.DID + "\"},\"createdBy\": \"" + bskyDid + "\",\"subjectBlobCids\": [],\"event\": {\"$type\": \"tools.ozone.moderation.defs#modEventAcknowledge\"}}"
 
-		_, err = SendPostWithHeaders(url, payload, accessJwt, additionalHeaders)
+		_, err = SendPostWithHeaders(requestURL, payload, accessJwt, additionalHeaders)
 		if err != nil {
 			return err
 		}
