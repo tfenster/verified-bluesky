@@ -55,13 +55,15 @@ func handleFailureCountUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Ensure request body is closed
+	defer r.Body.Close()
+
 	// Parse request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading body: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer r.Body.Close()
 
 	var request FailureCountRequest
 	err = json.Unmarshal(body, &request)
