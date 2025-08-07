@@ -272,6 +272,7 @@ func handleValidationCheck(w http.ResponseWriter, r *http.Request) {
 func checkValidation(moduleKey, verificationId, bskyHandle string) bool {
 	// This would call the appropriate validation endpoint
 	// For now, we'll use a simple HTTP client to call the validation endpoint
+	// TODO: Replace with config option
 	url := fmt.Sprintf("https://verifiedbsky.net/validate-%s/", moduleKey)
 
 	requestBody := map[string]string{
