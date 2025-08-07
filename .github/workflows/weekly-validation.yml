@@ -1,0 +1,97 @@
+name: Weekly Account Validation
+
+on:
+  schedule:
+    # Run every Sunday at 2:00 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  validate-accounts:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get all accounts
+        id: get-accounts
+        run: |
+          echo "Getting all accounts from the data endpoint..."
+          # The data endpoint requires the Bluesky password as part of the URL path
+          ACCOUNTS=$(curl -s "https://verifiedbsky.net/admin/data/${{ secrets.BSKY_PASSWORD }}" | jq -r '.[].value')
+          echo "Found accounts: $ACCOUNTS"
+          echo "accounts<<EOF" >> $GITHUB_OUTPUT
+          echo "$ACCOUNTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Validate each account
+        run: |
+          echo "Starting validation of all accounts..."
+          
+          # Convert the accounts to a JSON array for easier processing
+          accounts='${{ steps.get-accounts.outputs.accounts }}'
+          
+          for handle in $accounts; do
+            echo "Validating account: $handle"
+            
+            # Get current validation status for all modules (with authentication)
+            validation_response=$(curl -s "https://verifiedbsky.net/weekly-validation/$handle/${{ secrets.BSKY_PASSWORD }}")
+            echo "Validation response: $validation_response"
+            
+            # Parse the response and process each module
+            echo "$validation_response" | jq -r '.moduleResults | to_entries[] | @base64' | while IFS= read -r module_data; do
+              module_info=$(echo "$module_data" | base64 --decode)
+              module_key=$(echo "$module_info" | jq -r '.key')
+              is_valid=$(echo "$module_info" | jq -r '.value.isValid')
+              current_failure_count=$(echo "$module_info" | jq -r '.value.failureCount')
+              
+              echo "Account $handle, Module $module_key - Valid: $is_valid, Current failures: $current_failure_count"
+              
+              if [ "$is_valid" = "true" ]; then
+                # Module validation is valid, reset failure count to 0
+                echo "Account $handle module $module_key is valid, resetting failure count to 0"
+                curl -s -X POST "https://verifiedbsky.net/weekly-validation/${{ secrets.BSKY_PASSWORD }}" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"bskyHandle\": \"$handle\", \"moduleKey\": \"$module_key\", \"failureCount\": 0}"
+              else
+                # Module validation is invalid, increment failure count
+                new_failure_count=$((current_failure_count + 1))
+                echo "Account $handle module $module_key is invalid, incrementing failure count to $new_failure_count"
+                
+                response=$(curl -s -X POST "https://verifiedbsky.net/weekly-validation/${{ secrets.BSKY_PASSWORD }}" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"bskyHandle\": \"$handle\", \"moduleKey\": \"$module_key\", \"failureCount\": $new_failure_count}")
+                
+                echo "Update response: $response"
+                
+                # Check if user was removed from this module
+                action=$(echo "$response" | jq -r '.action')
+                if [ "$action" = "partial_removal" ]; then
+                  echo "⚠️ Account $handle was removed from module $module_key after the configured (MaxFailureCount) number of consecutive validation failures"
+                else
+                  echo "Account $handle module $module_key now has $new_failure_count consecutive failures"
+                fi
+              fi
+              
+              # Add a small delay between module checks to avoid rate limiting
+              sleep 1
+            done
+            
+            # Add a delay between accounts to avoid rate limiting
+            sleep 2
+          done
+          
+          echo "Weekly validation completed!"
+
+      - name: Summary
+        run: |
+          echo "## Weekly Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The weekly validation process has completed. Check the logs above for detailed results." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Process:**" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Retrieved all verified accounts from the data store" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔍 Validated each account using their original verification method for each module" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 Updated failure counts based on validation results per module" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚫 Removed accounts from specific modules that failed validation for the maximum number of consecutive times (MaxFailureCount)" >> $GITHUB_STEP_SUMMARY

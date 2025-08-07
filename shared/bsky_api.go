@@ -980,6 +980,71 @@ func SetLabel(label string, targetHandle string, accessJwt string, endpoint stri
 	}
 }
 
+func RemoveLabel(label string, targetHandle string, accessJwt string, endpoint string) error {
+	fmt.Println("Removing label " + label + " from handle " + targetHandle)
+	bskyDid, err := variables.Get("bsky_did")
+	if err != nil {
+		return err
+	}
+
+	bskyLabelerDid, err := variables.Get("bsky_labeler_did")
+	if err != nil {
+		return err
+	}
+
+	targetProfile, err := GetProfile(targetHandle, accessJwt, endpoint)
+	if err != nil {
+		return err
+	}
+
+	additionalHeaders := map[string]string{"atproto-accept-labelers": bskyLabelerDid + ";redact", "atproto-proxy": bskyDid + "#atproto_labeler"}
+
+	requestURL := endpoint + "/xrpc/tools.ozone.moderation.getRepo?did=" + url.QueryEscape(targetProfile.DID)
+
+	resp, err := SendGetWithHeader(requestURL, accessJwt, additionalHeaders)
+	if err != nil {
+		return err
+	}
+
+	var response ModerationRepoResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return err
+	}
+
+	found := false
+	for _, existingLabel := range response.Labels {
+		if existingLabel.Val == label {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		fmt.Println("Label does not exist")
+		return nil
+	} else {
+		requestURL = endpoint + "/xrpc/tools.ozone.moderation.emitEvent"
+
+		payload := "{\"subject\": {\"$type\": \"com.atproto.admin.defs#repoRef\",\"did\": \"" + targetProfile.DID + "\"},\"createdBy\": \"" + bskyDid + "\",\"subjectBlobCids\": [],\"event\": {\"$type\": \"tools.ozone.moderation.defs#modEventLabel\",\"createLabelVals\": [],\"negateLabelVals\": [\"" + label + "\"]}}"
+
+		_, err = SendPostWithHeaders(requestURL, payload, accessJwt, additionalHeaders)
+		if err != nil {
+			return err
+		}
+
+		payload = "{\"subject\": {\"$type\": \"com.atproto.admin.defs#repoRef\",\"did\": \"" + targetProfile.DID + "\"},\"createdBy\": \"" + bskyDid + "\",\"subjectBlobCids\": [],\"event\": {\"$type\": \"tools.ozone.moderation.defs#modEventAcknowledge\"}}"
+
+		_, err = SendPostWithHeaders(requestURL, payload, accessJwt, additionalHeaders)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Label removed successfully")
+		return nil
+	}
+}
+
 func SendPost(url string, payload string, accessJwt string) (*http.Response, error) {
 	return SendPostWithHeaders(url, payload, accessJwt, map[string]string{})
 }
