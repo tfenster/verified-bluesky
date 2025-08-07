@@ -68,7 +68,7 @@ jobs:
                 # Check if user was removed from this module
                 action=$(echo "$response" | jq -r '.action')
                 if [ "$action" = "partial_removal" ]; then
-                  echo "⚠️ Account $handle was removed from module $module_key after 4 consecutive validation failures"
+                  echo "⚠️ Account $handle was removed from module $module_key after the configured (MaxFailureCount) number of consecutive validation failures"
                 else
                   echo "Account $handle module $module_key now has $new_failure_count consecutive failures"
                 fi
@@ -94,4 +94,4 @@ jobs:
           echo "- ✅ Retrieved all verified accounts from the data store" >> $GITHUB_STEP_SUMMARY
           echo "- 🔍 Validated each account using their original verification method for each module" >> $GITHUB_STEP_SUMMARY
           echo "- 📊 Updated failure counts based on validation results per module" >> $GITHUB_STEP_SUMMARY
-          echo "- 🚫 Removed accounts from specific modules that failed validation 4 consecutive times" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚫 Removed accounts from specific modules that failed validation for the maximum number of consecutive times (MaxFailureCount)" >> $GITHUB_STEP_SUMMARY

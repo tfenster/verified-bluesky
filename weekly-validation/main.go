@@ -13,6 +13,13 @@ import (
 	"github.com/shared"
 )
 
+const (
+	// MaxFailureCount is the number of consecutive failures before removing a user from a module.
+	// This value determines how many times a validation can fail before the user is automatically
+	// removed from that specific module.
+	MaxFailureCount = 4
+)
+
 type FailureCountRequest struct {
 	BskyHandle   string `json:"bskyHandle"`
 	ModuleKey    string `json:"moduleKey"`
@@ -102,9 +109,9 @@ func handleFailureCountUpdate(w http.ResponseWriter, r *http.Request) {
 		Removed:      false,
 	}
 
-	// If failure count is 4, remove the user from this specific module
-	if request.FailureCount >= 4 {
-		fmt.Printf("Removing user %s from module %s due to 4 consecutive failures\n", request.BskyHandle, request.ModuleKey)
+	// If failure count reaches the maximum threshold, remove the user from this specific module
+	if request.FailureCount >= MaxFailureCount {
+		fmt.Printf("Removing user %s from module %s due to %d consecutive failures\n", request.BskyHandle, request.ModuleKey, MaxFailureCount)
 
 		// Find and remove the specific key for this module and user
 		keys, err := store.GetKeys()

@@ -10,7 +10,7 @@ The weekly validation system ensures that verified accounts remain valid over ti
 2. **Account Retrieval**: Gets all verified accounts from the `/admin/data` endpoint
 3. **Re-validation**: Checks each account using their original verification method for each module
 4. **Failure Tracking**: Maintains a failure count for each account per module
-5. **Automatic Cleanup**: Removes accounts from specific modules after 4 consecutive validation failures
+5. **Automatic Cleanup**: Removes accounts from specific modules after 4 consecutive validation failures (configurable via MaxFailureCount constant)
 
 ## Endpoints
 
@@ -69,12 +69,25 @@ Updates the failure count for a Bluesky handle for a specific module. Requires a
 }
 ```
 
-If `failureCount` reaches 4, the response will include `"action": "partial_removal"` and the account will be:
+If `failureCount` reaches 4 (MaxFailureCount), the response will include `"action": "partial_removal"` and the account will be:
 - Removed from the key/value store for that specific module
 - Removed from Bluesky lists and starter packs related to that module
 - Have their verification label for that module removed
 
 Note: The account will remain verified in other modules that are still valid.
+
+## Configuration
+
+### Failure Count Threshold
+
+The number of consecutive failures before removing a user from a module is controlled by the `MaxFailureCount` constant in `main.go`:
+
+```go
+const (
+    // MaxFailureCount is the number of consecutive failures before removing a user from a module
+    MaxFailureCount = 4
+)
+```
 
 ## Authentication
 
@@ -87,7 +100,7 @@ Both endpoints require authentication using the same method as the admin endpoin
 
 - **Valid account**: Failure count is reset to 0
 - **Invalid account**: Failure count is incremented by 1
-- **4 failures**: Account is completely removed from the system
+- **4 failures (MaxFailureCount)**: Account is removed from that specific module only (other modules remain unaffected)
 
 ## GitHub Workflow
 
