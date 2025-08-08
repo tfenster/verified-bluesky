@@ -125,11 +125,13 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// store in kv store
-		err = Store(naming, validationRequest.VerificationId, validationRequest.BskyHandle)
-		if err != nil {
-			http.Error(w, "Error storing user in k/v store: "+err.Error(), http.StatusInternalServerError)
-			return
+		if verifyOnly != "true" {
+			// store in kv store
+			err = Store(naming, validationRequest.VerificationId, validationRequest.BskyHandle)
+			if err != nil {
+				http.Error(w, "Error storing user in k/v store: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		result := []ListOrStarterPackWithUrl{}
