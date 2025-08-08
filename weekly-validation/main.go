@@ -10,6 +10,7 @@ import (
 
 	spinhttp "github.com/fermyon/spin/sdk/go/v2/http"
 	"github.com/fermyon/spin/sdk/go/v2/kv"
+	"github.com/fermyon/spin/sdk/go/v2/variables"
 	"github.com/shared"
 )
 
@@ -272,8 +273,13 @@ func handleValidationCheck(w http.ResponseWriter, r *http.Request) {
 func checkValidation(moduleKey, verificationId, bskyHandle string) bool {
 	// This would call the appropriate validation endpoint
 	// For now, we'll use a simple HTTP client to call the validation endpoint
-	// TODO: Replace with config option
-	url := fmt.Sprintf("https://verifiedbsky.net/validate-%s/", moduleKey)
+	// Base URL can be configured via Spin variable to allow localhost testing
+	baseURL, err := variables.Get("validation_base_url")
+	if err != nil || baseURL == "" {
+		baseURL = "https://verifiedbsky.net"
+	}
+	baseURL = strings.TrimRight(baseURL, "/")
+	url := fmt.Sprintf("%s/validate-%s/", baseURL, moduleKey)
 
 	requestBody := map[string]string{
 		"verificationId": verificationId,

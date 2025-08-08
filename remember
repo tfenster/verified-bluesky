@@ -4,6 +4,7 @@ export SPIN_VARIABLE_BSKY_LABELER_DID="did:plc:ar7c4by46qjdydhdevvrndac"
 export SPIN_VARIABLE_KV_EXPLORER_USER="tfenster"
 export SPIN_VARIABLE_KV_EXPLORER_PASSWORD="abc123"
 export SPIN_VARIABLE_VERIFY_ONLY="true"
+export SPIN_VARIABLE_VALIDATION_BASE_URL="http://localhost:3000"
 export SPIN_VARIABLE_BSKY_PASSWORD="..."
 
 # spin cloud variables list --app verified-bluesky
