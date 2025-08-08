@@ -287,7 +287,7 @@ func checkValidation(moduleKey, verificationId, bskyHandle string) bool {
 		baseURL = "https://verifiedbsky.net"
 	}
 	baseURL = strings.TrimRight(baseURL, "/")
-	url := fmt.Sprintf("%s/validate-%s/", baseURL, moduleKey)
+	url := fmt.Sprintf("%s/validate-%s/?verify_only=true", baseURL, moduleKey)
 
 	requestBody := map[string]string{
 		"verificationId": verificationId,

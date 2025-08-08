@@ -29,10 +29,15 @@ func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 	// list of bsky handles that are blacklisted, which means request to verify them will be rejected
 	bskyHandleBlacklist := []string{}
 
-	verifyOnly, err := variables.Get("verify_only")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	// Check for verify_only query parameter first, then fall back to variable
+	verifyOnly := r.URL.Query().Get("verify_only")
+	if verifyOnly == "" {
+		var err error
+		verifyOnly, err = variables.Get("verify_only")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 	switch r.Method {
 
