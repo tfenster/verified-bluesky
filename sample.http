@@ -26,6 +26,16 @@ Content-Type: text/json
 }
 
 ###
+# validate in verify-only mode (using query parameter)
+POST {{baseurl}}/validate-mvp?verify_only=true
+Content-Type: text/json
+
+{
+    "bskyHandle": "tobiasfenster.io",
+    "verificationId": "2efc9bb2-6a8c-e711-811e-3863bb36edf8"
+}
+
+###
 # delete
 DELETE {{baseurl}}/validate-rd/<pwd>
 Content-Type: text/plain
