@@ -26,8 +26,12 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Validate each account
+        id: validate-accounts
         run: |
           echo "Starting validation of all accounts..."
+          
+          # Initialize failure tracking file
+          echo "[]" > /tmp/failed_accounts.json
           
           # Convert the accounts to a JSON array for easier processing
           accounts='${{ steps.get-accounts.outputs.accounts }}'
@@ -41,6 +45,10 @@ jobs:
             # Get current validation status for all modules (with authentication)
             validation_response=$(curl -s "https://verifiedbsky.net/weekly-validation/$handle/${{ secrets.BSKY_PASSWORD }}")
             echo "Validation response: $validation_response"
+            
+            # Track failures for this account
+            account_failures=""
+            has_failures=false
             
             # Parse the response and process each module
             echo "$validation_response" | jq -r '.moduleResults | to_entries[] | @base64' | while IFS= read -r module_data; do
@@ -68,6 +76,20 @@ jobs:
                 
                 echo "Update response: $response"
                 
+                # Track this failure for issue creation
+                if [ "$new_failure_count" -gt 0 ]; then
+                  # Update the failures file with this account's failure info
+                  temp_file="/tmp/failed_accounts.json"
+                  jq --arg handle "$handle" --arg module "$module_key" --argjson count "$new_failure_count" '
+                    . as $root |
+                    if any(.account == $handle) then
+                      map(if .account == $handle then .modules += [{"module": $module, "failureCount": $count}] else . end)
+                    else
+                      . + [{"account": $handle, "modules": [{"module": $module, "failureCount": $count}]}]
+                    end
+                  ' "$temp_file" > "${temp_file}.tmp" && mv "${temp_file}.tmp" "$temp_file"
+                fi
+                
                 # Check if user was removed from this module
                 action=$(echo "$response" | jq -r '.action')
                 if [ "$action" = "partial_removal" ]; then
@@ -85,7 +107,94 @@ jobs:
             sleep 2
           done
           
+          # Output the failures for the next step
+          failures_json=$(cat /tmp/failed_accounts.json)
+          echo "Failed accounts data: $failures_json"
+          echo "failed-accounts<<EOF" >> $GITHUB_OUTPUT
+          echo "$failures_json" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
           echo "Weekly validation completed!"
+
+      - name: Create issue for failed accounts
+        if: steps.validate-accounts.outputs.failed-accounts != '[]' && steps.validate-accounts.outputs.failed-accounts != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const failedAccounts = JSON.parse('${{ steps.validate-accounts.outputs.failed-accounts }}');
+            
+            if (failedAccounts.length === 0) {
+              console.log('No failed accounts to report');
+              return;
+            }
+            
+            // Create the issue title and body
+            const currentDate = new Date().toISOString().split('T')[0];
+            const title = `Weekly Validation Failures - ${currentDate}`;
+            
+            let body = `# Weekly Account Validation Failures\n\n`;
+            body += `**Date:** ${currentDate}\n\n`;
+            body += `The following accounts failed validation during the weekly check:\n\n`;
+            
+            let totalFailures = 0;
+            
+            body += `| Account | Module | Failure Count |\n`;
+            body += `|---------|--------|---------------|\n`;
+            
+            failedAccounts.forEach(account => {
+              account.modules.forEach(module => {
+                body += `| ${account.account} | ${module.module} | ${module.failureCount} |\n`;
+                totalFailures++;
+              });
+            });
+            
+            body += `\n`;
+            
+            body += `## Summary\n\n`;
+            body += `- **Total accounts with failures:** ${failedAccounts.length}\n`;
+            body += `- **Total module failures:** ${totalFailures}\n\n`;
+            body += `### Automated Actions\n\n`;
+            body += `- ✅ Failure counts have been automatically incremented\n`;
+            body += `- 🔄 This issue was created automatically by the weekly validation workflow\n`;
+            body += `- 📊 Check the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) for detailed logs\n`;
+            
+            // Check if there's already an open issue for this week
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['weekly-validation', 'automated'],
+              per_page: 10
+            });
+            
+            const thisWeekIssue = existingIssues.data.find(issue => 
+              issue.title.includes(currentDate)
+            );
+            
+            if (thisWeekIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: thisWeekIssue.number,
+                title: title,
+                body: body
+              });
+              
+              console.log(`Updated existing issue #${thisWeekIssue.number}`);
+            } else {
+              // Create new issue
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['weekly-validation', 'automated', 'bug']
+              });
+              
+              console.log(`Created new issue #${issue.data.number}`);
+            }
 
       - name: Summary
         run: |
