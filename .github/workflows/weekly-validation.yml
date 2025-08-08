@@ -31,7 +31,8 @@ jobs:
           echo "Starting validation of all accounts..."
           
           # Initialize failure tracking file
-          echo "[]" > /tmp/failed_accounts.json
+          temp_file="/tmp/failed_accounts.json"
+          echo "[]" > $temp_file
           
           # Convert the accounts to a JSON array for easier processing
           accounts='${{ steps.get-accounts.outputs.accounts }}'
@@ -79,7 +80,6 @@ jobs:
                 # Track this failure for issue creation
                 if [ "$new_failure_count" -gt 0 ]; then
                   # Update the failures file with this account's failure info
-                  temp_file="/tmp/failed_accounts.json"
                   jq --arg handle "$handle" --arg module "$module_key" --argjson count "$new_failure_count" '
                     . as $root |
                     if any(.account == $handle) then
