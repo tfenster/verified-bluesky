@@ -1,0 +1,5 @@
+[key_value_store.default]
+type = "spin" 
+
+[key_value_store.failures]
+type = "spin" 
