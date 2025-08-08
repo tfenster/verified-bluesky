@@ -102,7 +102,7 @@ jobs:
           done
           
           # Output the failures for the next step
-          failures_json=$(cat /tmp/failed_accounts.json)
+          failures_json=$(cat "$temp_file")
           echo "Failed accounts data: $failures_json"
           echo "failed-accounts<<EOF" >> $GITHUB_OUTPUT
           echo "$failures_json" >> $GITHUB_OUTPUT
