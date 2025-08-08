@@ -17,10 +17,14 @@ jobs:
       - name: Get all accounts
         id: get-accounts
         run: |
+
+          # Temp file to capture failures for end-of-run summary
+          failures_file="failures.jsonl"
+          : > "$failures_file"
           echo "Getting all accounts from the data endpoint..."
           # The data endpoint requires the Bluesky password as part of the URL path
           ACCOUNTS=$(curl -s "https://verifiedbsky.net/admin/data/${{ secrets.BSKY_PASSWORD }}" | jq -r '.[].Value')
-          echo "Found accounts: $ACCOUNTS"
+          echo "::debug::Found accounts: $ACCOUNTS"
           echo "accounts<<EOF" >> $GITHUB_OUTPUT
           echo "$ACCOUNTS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -40,7 +44,7 @@ jobs:
             
             # Get current validation status for all modules (with authentication)
             validation_response=$(curl -s "https://verifiedbsky.net/weekly-validation/$handle/${{ secrets.BSKY_PASSWORD }}")
-            echo "Validation response: $validation_response"
+            echo "::debug::Validation response: $validation_response"
             
             # Parse the response and process each module
             echo "$validation_response" | jq -r '.moduleResults | to_entries[] | @base64' | while IFS= read -r module_data; do
@@ -49,15 +53,21 @@ jobs:
               is_valid=$(echo "$module_info" | jq -r '.value.isValid')
               current_failure_count=$(echo "$module_info" | jq -r '.value.failureCount')
               
-              echo "Account $handle, Module $module_key - Valid: $is_valid, Current failures: $current_failure_count"
+              echo "::debug::Account $handle, Module $module_key - Valid: $is_valid, Current failures: $current_failure_count"
               
               if [ "$is_valid" = "true" ]; then
                 # Module validation is valid, reset failure count to 0
                 echo "Account $handle module $module_key is valid, resetting failure count to 0"
                 curl -s -X POST "https://verifiedbsky.net/weekly-validation/${{ secrets.BSKY_PASSWORD }}" \
+                  removal_flag=true
                   -H "Content-Type: application/json" \
                   -d "{\"bskyHandle\": \"$handle\", \"moduleKey\": \"$module_key\", \"failureCount\": 0}"
+                  removal_flag=false
               else
+
+                # Record failure for summary
+                printf '{"handle":"%s","module":"%s","failureCount":%s,"removal":%s}\n' \
+                  "$handle" "$module_key" "$new_failure_count" "$removal_flag" >> "$failures_file"
                 # Module validation is invalid, increment failure count
                 new_failure_count=$((current_failure_count + 1))
                 echo "Account $handle module $module_key is invalid, incrementing failure count to $new_failure_count"
@@ -66,7 +76,7 @@ jobs:
                   -H "Content-Type: application/json" \
                   -d "{\"bskyHandle\": \"$handle\", \"moduleKey\": \"$module_key\", \"failureCount\": $new_failure_count}")
                 
-                echo "Update response: $response"
+                echo "::debug::Update response: $response"
                 
                 # Check if user was removed from this module
                 action=$(echo "$response" | jq -r '.action')
@@ -91,8 +101,17 @@ jobs:
         run: |
           echo "## Weekly Validation Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The weekly validation process has completed. Check the logs above for detailed results." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -s failures.jsonl ]; then
+            echo "### Accounts with Validation Failures" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Handle | Module | Failure Count | Removal |" >> $GITHUB_STEP_SUMMARY
+            echo "|---|---|---:|---|" >> $GITHUB_STEP_SUMMARY
+            jq -r 'fromjson | ["`" + .handle + "`", .module, (.failureCount|tostring), (if .removal then "Yes" else "No" end)] | "| " + (join(" | ")) + " |"' failures.jsonl >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No validation failures this run." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "**Process:**" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Retrieved all verified accounts from the data store" >> $GITHUB_STEP_SUMMARY
           echo "- 🔍 Validated each account using their original verification method for each module" >> $GITHUB_STEP_SUMMARY
