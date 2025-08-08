@@ -19,7 +19,7 @@ jobs:
         run: |
           echo "Getting all accounts from the data endpoint..."
           # The data endpoint requires the Bluesky password as part of the URL path
-          ACCOUNTS=$(curl -s "https://verifiedbsky.net/admin/data/${{ secrets.BSKY_PASSWORD }}" | jq -r '.[].value')
+          ACCOUNTS=$(curl -s "https://verifiedbsky.net/admin/data/${{ secrets.BSKY_PASSWORD }}" | jq -r '.[].Value')
           echo "Found accounts: $ACCOUNTS"
           echo "accounts<<EOF" >> $GITHUB_OUTPUT
           echo "$ACCOUNTS" >> $GITHUB_OUTPUT
@@ -31,6 +31,9 @@ jobs:
           
           # Convert the accounts to a JSON array for easier processing
           accounts='${{ steps.get-accounts.outputs.accounts }}'
+
+          # Remove duplicate accounts and sort them
+          accounts=$(echo "$accounts" | tr ' ' '\n' | sort -u | tr '\n' ' ')
           
           for handle in $accounts; do
             echo "Validating account: $handle"
