@@ -47,10 +47,6 @@ jobs:
             validation_response=$(curl -s "https://verifiedbsky.net/weekly-validation/$handle/${{ secrets.BSKY_PASSWORD }}")
             echo "Validation response: $validation_response"
             
-            # Track failures for this account
-            account_failures=""
-            has_failures=false
-            
             # Parse the response and process each module
             echo "$validation_response" | jq -r '.moduleResults | to_entries[] | @base64' | while IFS= read -r module_data; do
               module_info=$(echo "$module_data" | base64 --decode)
