@@ -63,6 +63,10 @@ POST {{baseurl}}/admin/data/<pwd>
 "https://www.ars-solvendi.de/export.json"
 
 ###
+# validate account
+GET {{baseurl}}/weekly-validation/tobiasfenster.io/<pwd>
+
+###
 # test all
 @testurl = {{baseurl}}/validate-
 

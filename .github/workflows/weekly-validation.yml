@@ -31,6 +31,9 @@ jobs:
           
           # Convert the accounts to a JSON array for easier processing
           accounts='${{ steps.get-accounts.outputs.accounts }}'
+
+          # Remove duplicate accounts and sort them
+          accounts=$(echo "$accounts" | tr ' ' '\n' | sort -u | tr '\n' ' ')
           
           for handle in $accounts; do
             echo "Validating account: $handle"
