@@ -80,7 +80,7 @@ func handleFailureCountUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	store, err := kv.OpenStore("default")
+	store, err := kv.OpenStore("failures")
 	if err != nil {
 		http.Error(w, "Error opening store: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -195,7 +195,7 @@ func handleValidationCheck(w http.ResponseWriter, r *http.Request) {
 	segments := strings.SplitN(path, "/", 2)
 	bskyHandle := strings.ToLower(segments[0])
 
-	store, err := kv.OpenStore("default")
+	store, err := kv.OpenStore("failures")
 	if err != nil {
 		http.Error(w, "Error opening store: "+err.Error(), http.StatusInternalServerError)
 		return
