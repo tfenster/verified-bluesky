@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.17.2"
+version = "0.17.3"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -126,7 +126,7 @@ route = "/internal/kv-explorer/..."
 [component.kv-explorer]
 source = { url = "https://github.com/fermyon/spin-kv-explorer/releases/download/v0.10.0/spin-kv-explorer.wasm", digest = "sha256:65bc286f8315746d1beecd2430e178f539fa487ebf6520099daae09a35dbce1d" }
 allowed_outbound_hosts = ["redis://*:*", "mysql://*:*", "postgres://*:*"]
-key_value_stores = ["default"]
+key_value_stores = ["default","failures"]
 
 [component.kv-explorer.variables]
 kv_credentials = "{{ kv_explorer_user }}:{{ kv_explorer_password }}"
