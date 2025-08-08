@@ -78,17 +78,15 @@ jobs:
                 echo "Update response: $response"
                 
                 # Track this failure for issue creation
-                if [ "$new_failure_count" -gt 0 ]; then
-                  # Update the failures file with this account's failure info
-                  jq --arg handle "$handle" --arg module "$module_key" --argjson count "$new_failure_count" '
-                    . as $root |
-                    if any(.account == $handle) then
-                      map(if .account == $handle then .modules += [{"module": $module, "failureCount": $count}] else . end)
-                    else
-                      . + [{"account": $handle, "modules": [{"module": $module, "failureCount": $count}]}]
-                    end
-                  ' "$temp_file" > "${temp_file}.tmp" && mv "${temp_file}.tmp" "$temp_file"
-                fi
+                # Update the failures file with this account's failure info
+                jq --arg handle "$handle" --arg module "$module_key" --argjson count "$new_failure_count" '
+                  . as $root |
+                  if any(.account == $handle) then
+                    map(if .account == $handle then .modules += [{"module": $module, "failureCount": $count}] else . end)
+                  else
+                    . + [{"account": $handle, "modules": [{"module": $module, "failureCount": $count}]}]
+                  end
+                ' "$temp_file" > "${temp_file}.tmp" && mv "${temp_file}.tmp" "$temp_file"
                 
                 # Check if user was removed from this module
                 action=$(echo "$response" | jq -r '.action')
