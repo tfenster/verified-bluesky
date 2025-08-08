@@ -202,6 +202,13 @@ func handleValidationCheck(w http.ResponseWriter, r *http.Request) {
 	}
 	defer store.Close()
 
+	failureStore, err := kv.OpenStore("failures")
+	if err != nil {
+		http.Error(w, "Error opening store: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer failureStore.Close()
+
 	result := ValidationResult{
 		BskyHandle:    bskyHandle,
 		ModuleResults: make(map[string]ModuleResult),
@@ -241,8 +248,8 @@ func handleValidationCheck(w http.ResponseWriter, r *http.Request) {
 		// Get current failure count for this module
 		failureKey := fmt.Sprintf("failure-%s-%s", moduleKey, bskyHandle)
 		failureCount := 0
-		if exists, _ := store.Exists(failureKey); exists {
-			if failureData, err := store.Get(failureKey); err == nil {
+		if exists, _ := failureStore.Exists(failureKey); exists {
+			if failureData, err := failureStore.Get(failureKey); err == nil {
 				if count, err := strconv.Atoi(string(failureData)); err == nil {
 					failureCount = count
 				}
