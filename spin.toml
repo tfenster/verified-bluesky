@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.17.3"
+version = "0.17.4"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -389,7 +389,7 @@ allowed_outbound_hosts = [
     "https://verifiedbsky.net",
     "http://localhost:3000",
 ]
-key_value_stores = ["failures"]
+key_value_stores = ["default","failures"]
 [component.weekly-validation.variables]
 bsky_handle = "{{ bsky_handle }}"
 bsky_password = "{{ bsky_password }}"
