@@ -242,7 +242,14 @@ func LoginToBsky() (string, string, error) {
 
 func LoginToBskyWithReq(r *http.Request) (string, string, error) {
 	pwd := r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]
-	return LoginToBskyWithPwd(pwd)
+	bskyPwd, err := variables.Get("bsky_password")
+	if err != nil {
+		return "", "", err
+	}
+	if pwd != bskyPwd {
+		return "", "", fmt.Errorf("unauthorized")
+	}
+	return LoginToBsky()
 }
 
 func LoginToBskyWithPwd(bskyPwd string) (string, string, error) {
