@@ -40,7 +40,14 @@ jobs:
           # Remove duplicate accounts and sort them
           accounts=$(echo "$accounts" | tr ' ' '\n' | sort -u | tr '\n' ' ')
           
+          # TEMPORARY: Flag to break after first failed account for testing
+          first_failure_found=false
+          
           for handle in $accounts; do
+            if [ "$first_failure_found" = "true" ]; then
+              echo "Stopping validation - first failure already processed for testing"
+              break
+            fi
             echo "Validating account: $handle"
             
             # Get current validation status for all modules (with authentication)
@@ -94,7 +101,8 @@ jobs:
                 
                 # TEMPORARY: Break after first failed account for testing
                 echo "Breaking after first failed account for testing purposes"
-                break 2
+                first_failure_found=true
+                break
               fi
               
               # Add a small delay between module checks to avoid rate limiting
