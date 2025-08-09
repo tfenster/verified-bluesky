@@ -91,6 +91,10 @@ jobs:
                 else
                   echo "Account $handle module $module_key now has $new_failure_count consecutive failures"
                 fi
+                
+                # TEMPORARY: Break after first failed account for testing
+                echo "Breaking after first failed account for testing purposes"
+                break 2
               fi
               
               # Add a small delay between module checks to avoid rate limiting
