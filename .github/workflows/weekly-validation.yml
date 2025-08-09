@@ -44,10 +44,6 @@ jobs:
           # Remove duplicate accounts and sort them
           accounts=$(echo "$accounts" | tr ' ' '\n' | sort -u | tr '\n' ' ')
           
-          # TEMPORARY: Use a file to signal when to break after first failed account for testing
-          stop_file="/tmp/stop_validation"
-          rm -f "$stop_file"
-          
           for handle in $accounts; do
             echo "Validating account: $handle"
             
