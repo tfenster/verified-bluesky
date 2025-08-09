@@ -98,11 +98,11 @@ jobs:
               fi
               
               # Add a small delay between module checks to avoid rate limiting
-              sleep 1
+              sleep 5
             done
             
             # Add a delay between accounts to avoid rate limiting
-            sleep 2
+            sleep 10
           done
           
           # Output the failures for the next step
