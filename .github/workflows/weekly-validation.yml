@@ -113,10 +113,12 @@ jobs:
       - name: Create issue for failed accounts
         if: steps.validate-accounts.outputs.failed-accounts != '[]' && steps.validate-accounts.outputs.failed-accounts != ''
         uses: actions/github-script@v7
+        env:
+          FAILED_ACCOUNTS_JSON: ${{ steps.validate-accounts.outputs.failed-accounts }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const failedAccounts = JSON.parse('${{ steps.validate-accounts.outputs.failed-accounts }}');
+            const failedAccounts = JSON.parse(process.env.FAILED_ACCOUNTS_JSON);
             
             if (failedAccounts.length === 0) {
               console.log('No failed accounts to report');
