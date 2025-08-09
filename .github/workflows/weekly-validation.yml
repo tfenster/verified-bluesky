@@ -40,11 +40,12 @@ jobs:
           # Remove duplicate accounts and sort them
           accounts=$(echo "$accounts" | tr ' ' '\n' | sort -u | tr '\n' ' ')
           
-          # TEMPORARY: Environment variable to break after first failed account for testing
-          export FIRST_FAILURE_FOUND="false"
+          # TEMPORARY: Use a file to signal when to break after first failed account for testing
+          stop_file="/tmp/stop_validation"
+          rm -f "$stop_file"
           
           for handle in $accounts; do
-            if [ "$FIRST_FAILURE_FOUND" = "true" ]; then
+            if [ -f "$stop_file" ]; then
               echo "Stopping validation - first failure already processed for testing"
               break
             fi
@@ -101,7 +102,7 @@ jobs:
                 
                 # TEMPORARY: Break after first failed account for testing
                 echo "Breaking after first failed account for testing purposes"
-                export FIRST_FAILURE_FOUND="true"
+                touch "$stop_file"
                 break
               fi
               
