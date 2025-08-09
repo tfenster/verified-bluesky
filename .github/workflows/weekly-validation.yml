@@ -49,10 +49,6 @@ jobs:
           rm -f "$stop_file"
           
           for handle in $accounts; do
-            if [ -f "$stop_file" ]; then
-              echo "Stopping validation - first failure already processed for testing"
-              break
-            fi
             echo "Validating account: $handle"
             
             # Get current validation status for all modules (with authentication)
@@ -103,11 +99,6 @@ jobs:
                 else
                   echo "Account $handle module $module_key now has $new_failure_count consecutive failures"
                 fi
-                
-                # TEMPORARY: Break after first failed account for testing
-                echo "Breaking after first failed account for testing purposes"
-                touch "$stop_file"
-                break
               fi
               
               # Add a small delay between module checks to avoid rate limiting
