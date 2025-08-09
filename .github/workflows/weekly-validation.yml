@@ -40,11 +40,11 @@ jobs:
           # Remove duplicate accounts and sort them
           accounts=$(echo "$accounts" | tr ' ' '\n' | sort -u | tr '\n' ' ')
           
-          # TEMPORARY: Flag to break after first failed account for testing
-          first_failure_found=false
+          # TEMPORARY: Environment variable to break after first failed account for testing
+          export FIRST_FAILURE_FOUND="false"
           
           for handle in $accounts; do
-            if [ "$first_failure_found" = "true" ]; then
+            if [ "$FIRST_FAILURE_FOUND" = "true" ]; then
               echo "Stopping validation - first failure already processed for testing"
               break
             fi
@@ -101,7 +101,7 @@ jobs:
                 
                 # TEMPORARY: Break after first failed account for testing
                 echo "Breaking after first failed account for testing purposes"
-                first_failure_found=true
+                export FIRST_FAILURE_FOUND="true"
                 break
               fi
               
