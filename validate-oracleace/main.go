@@ -13,67 +13,54 @@ import (
 
 func init() {
 
-	aceLevels := map[string][]string{
-		"Associate": {},
-		"Pro":       {},
-		"Director":  {},
+	moduleSpecifics, _ := shared.GetModuleSpecifics("oracleace")
+
+	moduleSpecifics.VerificationFunc = func(verificationId string, bskyHandle string) (bool, error) {
+		fmt.Println("Validating Oracle ACE with ID: " + verificationId)
+		url := "https://apexadb.oracle.com/ords/ace/profile/" + verificationId
+		xpathQuery := fmt.Sprintf("//a[@href='https://bsky.app/profile/%s' and @title='Bluesky']", bskyHandle)
+
+		return shared.HtmlXpathVerification(url, xpathQuery, bskyHandle)
 	}
 
-	moduleSpecifics := shared.ModuleSpecifics{
-		ModuleKey:            "oracleace",
-		ModuleName:           "Oracle ACEs",
-		ModuleNameShortened:  "Oracle ACEs",
-		ModuleLabel:          "oracleace",
-		ExplanationText:      "This is your ID in the Oracle ACEs list. This is the last part of the URL after https://apexadb.oracle.com/ords/ace/profile/. For this to work, you need to have the link to your Bluesky profile in the Social links on your Oracle ACE profile.",
-		FirstAndSecondLevel:  aceLevels,
-		Level1TranslationMap: make(map[string]string),
-		Level2TranslationMap: make(map[string]string),
-		VerificationFunc: func(verificationId string, bskyHandle string) (bool, error) {
-			fmt.Println("Validating Oracle ACE with ID: " + verificationId)
-			url := "https://apexadb.oracle.com/ords/ace/profile/" + verificationId
-			xpathQuery := fmt.Sprintf("//a[@href='https://bsky.app/profile/%s' and @title='Bluesky']", bskyHandle)
+	moduleSpecifics.NamingFunc = func(m shared.ModuleSpecifics, verificationId string) (shared.Naming, error) {
+		fmt.Println("Getting Oracle ACE Level with ID: " + verificationId)
+		url := "https://apexadb.oracle.com/ords/ace/profile/" + verificationId
 
-			return shared.HtmlXpathVerification(url, xpathQuery, bskyHandle)
-		},
-		NamingFunc: func(m shared.ModuleSpecifics, verificationId string) (shared.Naming, error) {
-			fmt.Println("Getting Oracle ACE Level with ID: " + verificationId)
-			url := "https://apexadb.oracle.com/ords/ace/profile/" + verificationId
+		resp, err := shared.SendGet(url, "")
+		if err != nil {
+			fmt.Println("Error fetching the URL: " + err.Error())
+			return shared.Naming{}, fmt.Errorf("Error fetching the Oracle ACE profile: " + err.Error())
+		}
+		defer resp.Body.Close()
 
-			resp, err := shared.SendGet(url, "")
-			if err != nil {
-				fmt.Println("Error fetching the URL: " + err.Error())
-				return shared.Naming{}, fmt.Errorf("Error fetching the Oracle ACE profile: " + err.Error())
-			}
-			defer resp.Body.Close()
-
-			doc, err := html.Parse(resp.Body)
-			if err != nil {
-				fmt.Println("Error parsing HTML:", err)
-				return shared.Naming{}, fmt.Errorf("Error parsing the Oracle ACE profile: " + err.Error())
-			}
-			firstAndSecondLevel := map[string][]string{}
-			aceLevel, err := FindACELevel(doc, verificationId, url)
-			if err != nil {
-				return shared.Naming{}, err
-			}
-			if aceLevel == "" {
-				fmt.Println("Could not identify ACE Level for Oracle ACE with ID " + verificationId)
-				return shared.Naming{}, fmt.Errorf("Could not identifiy ACE Level for Oracle ACE with ID %s", verificationId)
-			}
-			firstAndSecondLevel[aceLevel] = []string{}
-			return shared.SetupNamingStructure(shared.ModuleSpecifics{
-				ModuleKey:            m.ModuleKey,
-				ModuleName:           m.ModuleName,
-				ModuleNameShortened:  m.ModuleNameShortened,
-				ModuleLabel:          m.ModuleLabel,
-				ExplanationText:      m.ExplanationText,
-				FirstAndSecondLevel:  firstAndSecondLevel,
-				Level1TranslationMap: m.Level1TranslationMap,
-				Level2TranslationMap: m.Level2TranslationMap,
-				VerificationFunc:     m.VerificationFunc,
-				NamingFunc:           m.NamingFunc,
-			})
-		},
+		doc, err := html.Parse(resp.Body)
+		if err != nil {
+			fmt.Println("Error parsing HTML:", err)
+			return shared.Naming{}, fmt.Errorf("Error parsing the Oracle ACE profile: " + err.Error())
+		}
+		firstAndSecondLevel := map[string][]string{}
+		aceLevel, err := FindACELevel(doc, verificationId, url)
+		if err != nil {
+			return shared.Naming{}, err
+		}
+		if aceLevel == "" {
+			fmt.Println("Could not identify ACE Level for Oracle ACE with ID " + verificationId)
+			return shared.Naming{}, fmt.Errorf("Could not identifiy ACE Level for Oracle ACE with ID %s", verificationId)
+		}
+		firstAndSecondLevel[aceLevel] = []string{}
+		return shared.SetupNamingStructure(shared.ModuleSpecifics{
+			ModuleKey:            m.ModuleKey,
+			ModuleName:           m.ModuleName,
+			ModuleNameShortened:  m.ModuleNameShortened,
+			ModuleLabel:          m.ModuleLabel,
+			ExplanationText:      m.ExplanationText,
+			FirstAndSecondLevel:  firstAndSecondLevel,
+			Level1TranslationMap: m.Level1TranslationMap,
+			Level2TranslationMap: m.Level2TranslationMap,
+			VerificationFunc:     m.VerificationFunc,
+			NamingFunc:           m.NamingFunc,
+		})
 	}
 
 	spinhttp.Handle(moduleSpecifics.Handle)

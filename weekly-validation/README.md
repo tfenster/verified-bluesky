@@ -10,7 +10,8 @@ The weekly validation system ensures that verified accounts remain valid over ti
 2. **Account Retrieval**: Gets all verified accounts from the `/admin/data` endpoint
 3. **Re-validation**: Checks each account using their original verification method for each module
 4. **Failure Tracking**: Maintains a failure count for each account per module
-5. **Automatic Cleanup**: Removes accounts from specific modules after 4 consecutive validation failures (configurable via MaxFailureCount constant)
+5. **User Notifications**: Automatically sends warning and removal notifications via Bluesky direct messages
+6. **Automatic Cleanup**: Removes accounts from specific modules after 4 consecutive validation failures (configurable via MaxFailureCount constant)
 
 ## Endpoints
 
@@ -27,13 +28,17 @@ Checks the validation status of a specific Bluesky handle for all modules they'r
       "moduleKey": "mvp",
       "isValid": true,
       "failureCount": 0,
-      "removed": false
+      "removed": false,
+      "messageSent": false,
+      "messageSuccess": false
     },
     "ghstar": {
       "moduleKey": "ghstar", 
       "isValid": false,
       "failureCount": 2,
-      "removed": false
+      "removed": false,
+      "messageSent": true,
+      "messageSuccess": true
     }
   },
   "action": "none"
@@ -62,7 +67,9 @@ Updates the failure count for a Bluesky handle for a specific module. Requires a
       "moduleKey": "mvp",
       "isValid": false,
       "failureCount": 1,
-      "removed": false
+      "removed": false,
+      "messageSent": false,
+      "messageSuccess": false
     }
   },
   "action": "none"
@@ -73,6 +80,26 @@ If `failureCount` reaches 4 (MaxFailureCount), the response will include `"actio
 - Removed from the key/value store for that specific module
 - Removed from Bluesky lists and starter packs related to that module
 - Have their verification label for that module removed
+- Receive a removal notification direct message on Bluesky
+
+## User Notifications
+
+The system automatically sends notifications to users via Bluesky direct messages in the following scenarios:
+
+### Warning Notification (2nd Failure)
+When an account fails validation for the second consecutive time, a warning direct message is sent
+
+### Removal Notification (4th Failure)  
+When an account is removed from a module after the 4th failure, a removal direct message is sent
+
+### Notification Tracking
+Each module result includes notification tracking fields:
+- `messageSent`: Boolean indicating if a direct message attempt was made
+- `messageSuccess`: Boolean indicating if the direct message was successfully sent
+
+If the direct message fails to send (e.g., if the Bluesky chat API is unavailable or the user has messaging restrictions), the failure is logged and reported but no fallback action is taken.
+
+These fields are included in the GitHub issue reports for monitoring notification delivery. Failed direct message attempts are logged and reported in the issues, but no alternative notification method is used.
 
 Note: The account will remain verified in other modules that are still valid.
 
@@ -128,4 +155,12 @@ All validation actions are logged in the GitHub workflow output, including:
 - Accounts validated
 - Failure count updates  
 - Account removals
+- Notification delivery status
 - Any errors during the process
+
+The GitHub issues created by the workflow now include a detailed table showing:
+- Account handle
+- Module name  
+- Failure count
+- Whether a direct message was sent
+- Whether the direct message was successfully delivered

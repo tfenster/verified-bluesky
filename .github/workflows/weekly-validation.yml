@@ -78,13 +78,16 @@ jobs:
                 echo "Update response: $response"
                 
                 # Track this failure for issue creation
-                # Update the failures file with this account's failure info
-                jq --arg handle "$handle" --arg module "$module_key" --argjson count "$new_failure_count" '
+                # Update the failures file with this account's failure info including notification status
+                message_sent=$(echo "$response" | jq -r '.moduleResults[].messageSent // false')
+                message_success=$(echo "$response" | jq -r '.moduleResults[].messageSuccess // false')
+                
+                jq --arg handle "$handle" --arg module "$module_key" --argjson count "$new_failure_count" --argjson msg_sent "$message_sent" --argjson msg_success "$message_success" '
                   . as $root |
                   if any(.account == $handle) then
-                    map(if .account == $handle then .modules += [{"module": $module, "failureCount": $count}] else . end)
+                    map(if .account == $handle then .modules += [{"module": $module, "failureCount": $count, "messageSent": $msg_sent, "messageSuccess": $msg_success}] else . end)
                   else
-                    . + [{"account": $handle, "modules": [{"module": $module, "failureCount": $count}]}]
+                    . + [{"account": $handle, "modules": [{"module": $module, "failureCount": $count, "messageSent": $msg_sent, "messageSuccess": $msg_success}]}]
                   end
                 ' "$temp_file" > "${temp_file}.tmp" && mv "${temp_file}.tmp" "$temp_file"
                 
@@ -138,14 +141,20 @@ jobs:
             body += `The following accounts failed validation during the weekly check:\n\n`;
             
             let totalFailures = 0;
+            let notificationsSent = 0;
+            let notificationsSuccessful = 0;
             
-            body += `| Account | Module | Failure Count |\n`;
-            body += `|---------|--------|---------------|\n`;
+            body += `| Account | Module | Failure Count | Message Sent | Message Success |\n`;
+            body += `|---------|--------|---------------|--------------|----------------|\n`;
             
             failedAccounts.forEach(account => {
               account.modules.forEach(module => {
-                body += `| ${account.account} | ${module.module} | ${module.failureCount} |\n`;
+                const msgSent = module.messageSent ? '✅' : '❌';
+                const msgSuccess = module.messageSuccess ? '✅' : '❌';
+                body += `| ${account.account} | ${module.module} | ${module.failureCount} | ${msgSent} | ${msgSuccess} |\n`;
                 totalFailures++;
+                if (module.messageSent) notificationsSent++;
+                if (module.messageSuccess) notificationsSuccessful++;
               });
             });
             
@@ -153,9 +162,13 @@ jobs:
             
             body += `## Summary\n\n`;
             body += `- **Total accounts with failures:** ${failedAccounts.length}\n`;
-            body += `- **Total module failures:** ${totalFailures}\n\n`;
+            body += `- **Total module failures:** ${totalFailures}\n`;
+            body += `- **Direct messages sent:** ${notificationsSent}\n`;
+            body += `- **Successful messages:** ${notificationsSuccessful}\n\n`;
             body += `### Automated Actions\n\n`;
             body += `- ✅ Failure counts have been automatically incremented\n`;
+            body += `- 📩 Warning direct messages sent to users on their repeated failure\n`;
+            body += `- 🚫 Removal direct messages sent to users removed after max failure\n`;
             body += `- 🔄 This issue was created automatically by the weekly validation workflow\n`;
             body += `- 📊 Check the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) for detailed logs\n`;
             
