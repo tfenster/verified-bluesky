@@ -77,6 +77,12 @@ POST {{baseurl}}/admin/data/<pwd>
 GET {{baseurl}}/weekly-validation/tobiasfenster.io/<pwd>
 
 ###
+# set failure
+POST {{baseurl}}/weekly-validation/tobiasfenster.io/<pwd>
+
+{"bskyHandle": "tobiasfenster.io", "moduleKey": "colorcloud", "failureCount": 4}
+
+###
 # test all
 @testurl = {{baseurl}}/validate-
 

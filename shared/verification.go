@@ -25,6 +25,376 @@ type ModuleSpecifics struct {
 	Level2TranslationMap map[string]string
 }
 
+// GetModuleSpecifics returns the ModuleSpecifics for a given moduleKey
+func GetModuleSpecifics(moduleKey string) (ModuleSpecifics, error) {
+	switch moduleKey {
+	case "mvp":
+		return getMvpModuleSpecifics(), nil
+	case "awshero":
+		return getAwsHeroModuleSpecifics(), nil
+	case "rd":
+		return getRdModuleSpecifics(), nil
+	case "ghstar":
+		return getGhStarModuleSpecifics(), nil
+	case "javachamps":
+		return getJavaChampsModuleSpecifics(), nil
+	case "ibmchamp":
+		return getIbmChampModuleSpecifics(), nil
+	case "oracleace":
+		return getOracleAceModuleSpecifics(), nil
+	case "cncfamb":
+		return getCncfAmbModuleSpecifics(), nil
+	case "cttt":
+		return getCtttModuleSpecifics(), nil
+	case "colorcloud":
+		return getColorCloudModuleSpecifics(), nil
+	case "dynamicsminds":
+		return getDynamicsMindsModuleSpecifics(), nil
+	case "nordicsummit":
+		return getNordicSummitModuleSpecifics(), nil
+	default:
+		return ModuleSpecifics{}, fmt.Errorf("unknown module key: %s", moduleKey)
+	}
+}
+
+// Module-specific configurations
+func getMvpModuleSpecifics() ModuleSpecifics {
+	mvpAwardsAndTechnologyFocusAreas := map[string][]string{
+		"AI Platform": {
+			"Azure AI Services",
+			"Azure AI Studio",
+			"Azure Machine Learning Studio",
+			"Responsible AI with Azure",
+		},
+		"Business Applications": {
+			"AI ERP",
+			"Business Central",
+			"Copilot Studio",
+			"Customer Experience",
+			"Customer Service",
+			"Power Apps",
+			"Power Automate",
+			"Power Pages",
+		},
+		"Cloud and Datacenter Management": {
+			"Datacenter Management (Group Policy, System Center)",
+			"Enterprise and Platform Security",
+			"High Availability",
+			"Hyper-V",
+			"Linux on Hyper-V",
+			"On-premises and Hybrid AKS, Container Management",
+			"On-Premises Networking",
+			"On-Premises Storage",
+			"Windows Server",
+		},
+		"Data Platform": {
+			"Analysis Services",
+			"Azure Arc (Arc SQL Server, Arc SQL MI)",
+			"Azure Cosmos DB",
+			"Azure Data Lake",
+			"Azure Database for MySQL",
+			"Azure Database for PostgreSQL",
+			"Azure SQL (Database, Pools, Serverless, Hyperscale, Managed Instance, Virtual Machines)",
+			"Azure Synapse Analytics",
+			"Data Engineering & Data Science in Fabric",
+			"Data Integration",
+			"Database Development & DevOps",
+			"Microsoft Fabric",
+			"Microsoft Purview - Data Governance",
+			"Paginated Operational Reports (RDL)",
+			"Power BI",
+			"Real-Time Intelligence",
+			"SQL Server (on Windows, Linux, Containers)",
+			"SQL Server ML Services",
+			"Tools & Connectivity",
+		},
+		"Developer Technologies": {
+			".NET",
+			"C++",
+			"Developer Security",
+			"Developer Tools",
+			"DevOps",
+			"Java",
+			"Python",
+			"Web Development",
+		},
+		"Internet of Things": {
+			"Azure Edge Devices",
+			"Azure IoT Services & Development",
+		},
+		"M365": {
+			"Access",
+			"Excel",
+			"Exchange",
+			"Loop",
+			"M365 Copilot",
+			"M365 Copilot Extensibility",
+			"M365 Development",
+			"Mesh",
+			"Microsoft 365",
+			"Microsoft advanced content management and experiences",
+			"Microsoft Graph",
+			"Microsoft Stream",
+			"Microsoft Teams",
+			"Microsoft Viva",
+			"OneDrive",
+			"OneNote",
+			"Outlook",
+			"Planner",
+			"PowerPoint",
+			"SharePoint",
+			"Visio",
+			"Word",
+		},
+		"Microsoft Azure": {
+			"Azure Application PaaS",
+			"Azure Compute Infrastructure",
+			"Azure Cost, Resource & Configuration Management",
+			"Azure HPC & AI Infrastructure",
+			"Azure Hybrid & Migration",
+			"Azure Infrastructure as Code",
+			"Azure Innovation Hub",
+			"Azure Integration PaaS",
+			"Azure Kubernetes and Open Source",
+			"Azure Networking",
+			"Azure Storage",
+			"Azure Well-Architected, Resiliency & Observability",
+			"PowerShell",
+		},
+		"Security": {
+			"Cloud Security (Microsoft Defender for Cloud, Azure network security products, GitHub Advanced Security)",
+			"Azure network security products",
+			"GitHub Advanced Security",
+			"Identity & Access",
+			"Microsoft Intune",
+			"Microsoft Purview",
+			"Microsoft Security Copilot",
+			"SIEM & XDR (Microsoft Sentinel & Microsoft Defender XDR suite)",
+		},
+		"Windows Development": {
+			"Windows Design",
+			"Windows Development",
+		},
+		"Windows and Devices": {
+			"Azure Virtual Desktop",
+			"Surface",
+			"Windows",
+			"Windows 365",
+		},
+	}
+
+	mvpAwardTranslationMap := map[string]string{
+		"AI Platform":                     "AI",
+		"Business Applications":           "BizApps",
+		"Cloud and Datacenter Management": "CDM",
+		"Data Platform":                   "Data Plat.",
+		"Developer Technologies":          "Dev Tech",
+		"Internet of Things":              "IoT",
+		"Microsoft Azure":                 "Azure",
+		"Windows Development":             "Windows Dev",
+	}
+
+	mvpTechFocusTranslationMap := map[string]string{
+		"Azure Machine Learning Studio":                                                           "Azure ML Studio",
+		"Datacenter Management (Group Policy, System Center)":                                     "Datacenter Management",
+		"On-premises and Hybrid AKS, Container Management":                                        "On-prem. & Hybrid AKS, Containers",
+		"Enterprise and Platform Security":                                                        "Enterpr. & Platf. Security",
+		"Azure Arc (Arc SQL Server, Arc SQL MI)":                                                  "Azure Arc",
+		"Azure Database for MySQL":                                                                "Azure DB for MySQL",
+		"Azure Database for PostgreSQL":                                                           "Azure DB PostgreSQL",
+		"Azure SQL (Database, Pools, Serverless, Hyperscale, Managed Instance, Virtual Machines)": "Azure SQL",
+		"Azure Synapse Analytics":                                                                 "Azure Synapse",
+		"Data Engineering & Data Science in Fabric":                                               "Data Eng. in Fabric",
+		"Database Development & DevOps":                                                           "DB Dev & DevOps",
+		"Microsoft Purview - Data Governance":                                                     "Microsoft Purview",
+		"Paginated Operational Reports (RDL)":                                                     "Pag. Op. Reports",
+		"Real-Time Intelligence":                                                                  "RT Intelligence",
+		"SQL Server (on Windows, Linux, Containers)":                                              "SQL Server",
+		"SQL Server ML Services":                                                                  "SQL Server ML",
+		"Azure IoT Services & Development":                                                        "Azure IoT Services & Dev",
+		"Microsoft advanced content management and experiences":                                   "Advanced content mmgmt",
+		"Azure Application PaaS":                                                                  "Application PaaS",
+		"Azure Compute Infrastructure":                                                            "Compute Infrastructure",
+		"Azure Cost, Resource & Configuration Management":                                         "Cost, Resource & Conf Mg.",
+		"Azure HPC & AI Infrastructure":                                                           "HPC & AI Infrastructure",
+		"Azure Hybrid & Migration":                                                                "Hybrid & Migration",
+		"Azure Infrastructure as Code":                                                            "Infrastructure as Code",
+		"Azure Innovation Hub":                                                                    "Innovation Hub",
+		"Azure Integration PaaS":                                                                  "Integration PaaS",
+		"Azure Kubernetes and Open Source":                                                        "K8s and Open Source",
+		"Azure Networking":                                                                        "Networking",
+		"Azure Storage":                                                                           "Storage",
+		"Azure Well-Architected, Resiliency & Observability":                                      "Well-Architected etc.",
+		"Cloud Security (Microsoft Defender for Cloud, Azure network security products, GitHub Advanced Security)": "Cloud Security",
+		"Azure network security products":                                "Azure net security",
+		"GitHub Advanced Security":                                       "GitHub Adv. Security",
+		"Microsoft Security Copilot":                                     "Microsoft Sec. Copilot",
+		"SIEM & XDR (Microsoft Sentinel & Microsoft Defender XDR suite)": "SIEM & XDR",
+		"Azure Virtual Desktop":                                          "Azure VD",
+	}
+
+	return ModuleSpecifics{
+		ModuleKey:            "mvp",
+		ModuleName:           "Microsoft Most Valuable Professionals (MVPs)",
+		ModuleNameShortened:  "MVPs",
+		ModuleLabel:          "ms-mvp",
+		ExplanationText:      "This is your MVP ID, a GUID. If you open your profile on <a href=\"https://mvp.microsoft.com\" target=\"_blank\">mvp.microsoft.com</a>, it is the last part of the URL, after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on your MVP profile (use \"Other\" as type).",
+		FirstAndSecondLevel:  mvpAwardsAndTechnologyFocusAreas,
+		Level1TranslationMap: mvpAwardTranslationMap,
+		Level2TranslationMap: mvpTechFocusTranslationMap,
+	}
+}
+
+func getAwsHeroModuleSpecifics() ModuleSpecifics {
+	return ModuleSpecifics{
+		ModuleKey:            "awshero",
+		ModuleName:           "AWS Heroes",
+		ModuleNameShortened:  "AWS Heroes",
+		ModuleLabel:          "awshero",
+		ExplanationText:      "This is your ID in the AWS Heroes list. If you open your profile, it is the last part of the URL after https://aws.amazon.com/developer/community/heroes/ (without everything after \"/?\"). For this to work, you need to have the link to your Bluesky profile in the social links on your AWS Hero profile.",
+		FirstAndSecondLevel:  make(map[string][]string),
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
+func getRdModuleSpecifics() ModuleSpecifics {
+	return ModuleSpecifics{
+		ModuleKey:            "rd",
+		ModuleName:           "Microsoft Regional Directors (RDs)",
+		ModuleNameShortened:  "RDs",
+		ModuleLabel:          "ms-rd",
+		ExplanationText:      "This is your RD ID, a GUID. If you open your profile on <a href=\"https://rd.microsoft.com\" target=\"_blank\">rd.microsoft.com</a>, it is the last part of the URL, after the last /. For this to work, you need to have the link to your Bluesky profile in the list of social networks on your RD profile (use \"Other\" as type).",
+		FirstAndSecondLevel:  make(map[string][]string),
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
+func getGhStarModuleSpecifics() ModuleSpecifics {
+	return ModuleSpecifics{
+		ModuleKey:            "ghstar",
+		ModuleName:           "Github Stars",
+		ModuleNameShortened:  "GitHub Stars",
+		ModuleLabel:          "ghstar",
+		ExplanationText:      "This is your ID in the Github Stars list. If you open your profile, it is the last part of the URL after https://stars.github.com/profiles/ and without the / in the end. For this to work, you need to have the link to your Bluesky profile in the Additional links on your Github Stars profile.",
+		FirstAndSecondLevel:  make(map[string][]string),
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
+func getJavaChampsModuleSpecifics() ModuleSpecifics {
+	return ModuleSpecifics{
+		ModuleKey:            "javachamps",
+		ModuleName:           "Java Champions",
+		ModuleNameShortened:  "Java Champions",
+		ModuleLabel:          "javachamps",
+		ExplanationText:      "This is your name, exactly as it appears on the Java Champions page. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) somewhere in your social links.",
+		FirstAndSecondLevel:  make(map[string][]string),
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
+func getIbmChampModuleSpecifics() ModuleSpecifics {
+	return ModuleSpecifics{
+		ModuleKey:            "ibmchamp",
+		ModuleName:           "IBM Champions",
+		ModuleNameShortened:  "IBM Champions",
+		ModuleLabel:          "ibmchamp",
+		ExplanationText:      "This is your ID in the IBM Champions list. If you open your profile, it is the last part of the URL after https://community.ibm.com/community/user/champions/expert/. For this to work, you need to have the link to your Bluesky profile in the social links on your IBM Champion profile.",
+		FirstAndSecondLevel:  make(map[string][]string),
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
+func getOracleAceModuleSpecifics() ModuleSpecifics {
+
+	aceLevels := map[string][]string{
+		"Associate": {},
+		"Pro":       {},
+		"Director":  {},
+	}
+
+	return ModuleSpecifics{
+		ModuleKey:            "oracleace",
+		ModuleName:           "Oracle ACEs",
+		ModuleNameShortened:  "Oracle ACEs",
+		ModuleLabel:          "oracleace",
+		ExplanationText:      "This is your ID in the Oracle ACEs list. This is the last part of the URL after https://apexadb.oracle.com/ords/ace/profile/. For this to work, you need to have the link to your Bluesky profile in the Social links on your Oracle ACE profile.",
+		FirstAndSecondLevel:  aceLevels,
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
+func getCncfAmbModuleSpecifics() ModuleSpecifics {
+	return ModuleSpecifics{
+		ModuleKey:            "cncfamb",
+		ModuleName:           "CNCF Ambassadors",
+		ModuleNameShortened:  "CNCF Ambassadors",
+		ModuleLabel:          "cncfamb",
+		ExplanationText:      "This is your ID in the CNCF Ambassadors list. If you open your profile, it is the last part of the URL after https://www.cncf.io/people/ambassadors/?p=. For this to work, you need to have the link to your Bluesky profile in the social links on your CNCF Ambassador profile.",
+		FirstAndSecondLevel:  make(map[string][]string),
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
+func getCtttModuleSpecifics() ModuleSpecifics {
+	return ModuleSpecifics{
+		ModuleKey:            "cttt",
+		ModuleName:           "Cloud Technology Townhall Tallinn speakers",
+		ModuleNameShortened:  "CTTT speakers",
+		ModuleLabel:          "cttt",
+		ExplanationText:      "This is your name, exactly as it appears on the CTTT speakers page and on Sessionize. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) as link of type \"Other\" on your Sessionize profile.",
+		FirstAndSecondLevel:  make(map[string][]string),
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
+func getColorCloudModuleSpecifics() ModuleSpecifics {
+	return ModuleSpecifics{
+		ModuleKey:            "colorcloud",
+		ModuleName:           "ColorCloud speakers",
+		ModuleNameShortened:  "ColorCloud speakers",
+		ModuleLabel:          "colorcloud",
+		ExplanationText:      "This is your name, exactly as it appears on the ColorCloud speakers page and on Sessionize. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) as link of type \"Other\" on your Sessionize profile.",
+		FirstAndSecondLevel:  make(map[string][]string),
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
+func getDynamicsMindsModuleSpecifics() ModuleSpecifics {
+	return ModuleSpecifics{
+		ModuleKey:            "dynamicsminds",
+		ModuleName:           "DynamicsMinds speakers",
+		ModuleNameShortened:  "DynamicsMinds",
+		ModuleLabel:          "dynamicsminds",
+		ExplanationText:      "This is your name, exactly as it appears on the DynamicsMinds speakers page. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) somewhere in your biography.",
+		FirstAndSecondLevel:  make(map[string][]string),
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
+func getNordicSummitModuleSpecifics() ModuleSpecifics {
+	return ModuleSpecifics{
+		ModuleKey:            "nordicsummit",
+		ModuleName:           "Nordic Summit speakers",
+		ModuleNameShortened:  "Nordic Summit speakers",
+		ModuleLabel:          "nordicsummit",
+		ExplanationText:      "This is your name, exactly as it appears on the Nordic Summit speakers page and on Sessionize. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) as link of type \"Other\" on your Sessionize profile.",
+		FirstAndSecondLevel:  make(map[string][]string),
+		Level1TranslationMap: make(map[string]string),
+		Level2TranslationMap: make(map[string]string),
+	}
+}
+
 func (m ModuleSpecifics) Handle(w http.ResponseWriter, r *http.Request) {
 	// list of bsky handles that are blacklisted, which means request to verify them will be rejected
 	bskyHandleBlacklist := []string{}

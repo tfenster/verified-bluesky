@@ -1,5 +1,7 @@
 [key_value_store.default]
 type = "spin" 
+path = ".spin/default.db"
 
 [key_value_store.failures]
 type = "spin" 
+path = ".spin/failures.db"

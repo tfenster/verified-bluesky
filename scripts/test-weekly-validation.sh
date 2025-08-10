@@ -41,6 +41,18 @@ for handle in $accounts; do
         
         echo "Update response: $response"
         
+        # Check notification status
+        message_sent=$(echo "$response" | jq -r '.moduleResults[].messageSent // false')
+        message_success=$(echo "$response" | jq -r '.moduleResults[].messageSuccess // false')
+        
+        if [ "$message_sent" = "true" ]; then
+            if [ "$message_success" = "true" ]; then
+                echo "� Direct message sent successfully to $handle"
+            else
+                echo "⚠️ Direct message failed to send to $handle"
+            fi
+        fi
+        
         # Check if user was removed from this module
         action=$(echo "$response" | jq -r '.action')
         if [ "$action" = "partial_removal" ]; then

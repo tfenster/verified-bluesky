@@ -3,6 +3,7 @@ package shared
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -842,6 +843,57 @@ func Follow(toFollowDid string, accessJwt string, endpoint string) (string, erro
 	return "Followed user successfully", nil
 }
 
+func SendDirectMessage(targetHandle string, message string, accessJwt string, endpoint string) error {
+	fmt.Println("Sending direct message to " + targetHandle)
+
+	// Get target user's profile to get their DID
+	targetProfile, err := GetProfile(targetHandle, accessJwt, endpoint)
+	if err != nil {
+		return fmt.Errorf("error getting profile for %s: %v", targetHandle, err)
+	}
+
+	// Try to send via chat API
+	sendUrl := "https://api.bsky.chat/xrpc/chat.bsky.convo.sendMessage"
+
+	// First try to get or create a conversation
+	convoUrl := "https://api.bsky.chat/xrpc/chat.bsky.convo.getConvoForMembers?members=" + url.QueryEscape(targetProfile.DID)
+
+	convoResp, err := SendGet(convoUrl, accessJwt)
+	if err != nil {
+		return fmt.Errorf("chat API not available or conversation creation failed: %v", err)
+	}
+	defer convoResp.Body.Close()
+
+	// Parse conversation response to get convoId
+	var convoData map[string]interface{}
+	err = json.NewDecoder(convoResp.Body).Decode(&convoData)
+	if err != nil {
+		return fmt.Errorf("error parsing conversation response: %v", err)
+	}
+
+	convoId, ok := convoData["convo"].(map[string]interface{})["id"].(string)
+	if !ok {
+		return fmt.Errorf("no conversation ID found in response")
+	}
+
+	// Send the direct message
+	payload := fmt.Sprintf(`{
+		"convoId": "%s",
+		"message": {
+			"text": "%s",
+			"$type": "chat.bsky.convo.defs#messageInput"
+		}
+	}`, convoId, message)
+
+	_, err = SendPost(sendUrl, payload, accessJwt)
+	if err != nil {
+		return fmt.Errorf("error sending direct message via chat API: %v", err)
+	}
+
+	fmt.Println("Direct message sent successfully via chat API")
+	return nil
+}
+
 func RespondWithStarterPacksAndListsForTitle(title string, w http.ResponseWriter, accessJwt string, endpoint string) error {
 	bskyHandle, err := variables.Get("bsky_handle")
 	if err != nil {
@@ -1084,8 +1136,14 @@ func SendPostWithHeaders(url string, payload string, accessJwt string, additiona
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println(fmt.Sprintf("The POST request returned status code %d", resp.StatusCode))
-		return nil, fmt.Errorf("The POST request returned %d", resp.StatusCode)
+		// Read the response body for logging and error details
+		bodyBytes, readErr := io.ReadAll(resp.Body)
+		bodyStr := ""
+		if readErr == nil {
+			bodyStr = string(bodyBytes)
+		}
+		fmt.Println(fmt.Sprintf("The POST request returned status code %d with body: %s", resp.StatusCode, bodyStr))
+		return nil, fmt.Errorf("The POST request returned %d with body: %s", resp.StatusCode, bodyStr)
 	}
 	return resp, nil
 }
@@ -1127,8 +1185,14 @@ func SendGetWithHeaderLogConfigurable(url string, accessJwt string, additionalHe
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println(fmt.Sprintf("The GET request returned status code %d", resp.StatusCode))
-		return nil, fmt.Errorf("The GET request returned %d", resp.StatusCode)
+		// Read the response body for logging and error details
+		bodyBytes, readErr := io.ReadAll(resp.Body)
+		bodyStr := ""
+		if readErr == nil {
+			bodyStr = string(bodyBytes)
+		}
+		fmt.Println(fmt.Sprintf("The GET request returned status code %d with body: %s", resp.StatusCode, bodyStr))
+		return nil, fmt.Errorf("The GET request returned %d with body: %s", resp.StatusCode, bodyStr)
 	}
 
 	return resp, nil
