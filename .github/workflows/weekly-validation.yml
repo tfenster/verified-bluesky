@@ -151,7 +151,7 @@ jobs:
               account.modules.forEach(module => {
                 const msgSent = module.messageSent ? '✅' : '❌';
                 const msgSuccess = module.messageSuccess ? '✅' : '❌';
-                body += `| ${account.account} | ${module.module} | ${module.failureCount} | ${msgSent} | ${msgSuccess} |\n`;
+                body += `| [${account.account}](https://bsky.app/profile/${account.account}) | ${module.module} | ${module.failureCount} | ${msgSent} | ${msgSuccess} |\n`;
                 totalFailures++;
                 if (module.messageSent) notificationsSent++;
                 if (module.messageSuccess) notificationsSuccessful++;
