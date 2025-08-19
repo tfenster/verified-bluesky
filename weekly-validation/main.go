@@ -428,9 +428,9 @@ func removeFromBlueskyAndLabel(key, bskyHandle string) error {
 	}
 
 	// Remove the label
-	err = shared.RemoveLabel(moduleKey, bskyHandle, accessJwt, endpoint)
+	err = shared.RemoveLabel(moduleSpecifics.ModuleLabel, bskyHandle, accessJwt, endpoint)
 	if err != nil {
-		fmt.Printf("Error removing label %s from %s: %v\n", moduleKey, bskyHandle, err)
+		fmt.Printf("Error removing label %s from %s: %v\n", moduleSpecifics.ModuleLabel, bskyHandle, err)
 	}
 
 	return nil
