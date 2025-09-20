@@ -687,6 +687,12 @@ func GetBody(r *http.Request, w http.ResponseWriter) (ValidationRequest, error) 
 	if err != nil {
 		return ValidationRequest{}, fmt.Errorf("Error decoding body JSON: %v", err)
 	}
+
+	// Trim leading and trailing whitespace from input fields
+	validationRequest.BskyHandle = strings.TrimSpace(validationRequest.BskyHandle)
+	validationRequest.VerificationId = strings.TrimSpace(validationRequest.VerificationId)
+
+	// Convert handle to lowercase after trimming
 	validationRequest.BskyHandle = strings.ToLower(validationRequest.BskyHandle)
 	return validationRequest, nil
 }
