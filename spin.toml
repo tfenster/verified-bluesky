@@ -132,29 +132,6 @@ key_value_stores = ["default","failures"]
 kv_credentials = "{{ kv_explorer_user }}:{{ kv_explorer_password }}"
 
 [[trigger.http]]
-route = "/validate-dynamicsminds/..."
-component = "validate-dynamicsminds"
-
-[component.validate-dynamicsminds]
-source = "validate-dynamicsminds/main.wasm"
-allowed_outbound_hosts = [
-    "https://bsky.social",
-    "https://api.runevents.net",
-    "https://*.bsky.network",
-]
-key_value_stores = ["default"]
-[component.validate-dynamicsminds.variables]
-bsky_handle = "{{ bsky_handle }}"
-bsky_password = "{{ bsky_password }}"
-bsky_did = "{{ bsky_did }}"
-bsky_labeler_did = "{{ bsky_labeler_did }}"
-verify_only = "{{ verify_only }}"
-[component.validate-dynamicsminds.build]
-command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
-workdir = "validate-dynamicsminds"
-watch = ["**/*.go", "go.mod"]
-
-[[trigger.http]]
 route = "/validate-ghstar/..."
 component = "validate-ghstar"
 
@@ -263,52 +240,6 @@ workdir = "validate-oracleace"
 watch = ["**/*.go", "go.mod"]
 
 [[trigger.http]]
-route = "/validate-cttt/..."
-component = "validate-cttt"
-
-[component.validate-cttt]
-source = "validate-cttt/main.wasm"
-allowed_outbound_hosts = [
-    "https://bsky.social",
-    "https://*.bsky.network",
-    "https://sessionize.com",
-]
-key_value_stores = ["default"]
-[component.validate-cttt.variables]
-bsky_handle = "{{ bsky_handle }}"
-bsky_password = "{{ bsky_password }}"
-bsky_did = "{{ bsky_did }}"
-bsky_labeler_did = "{{ bsky_labeler_did }}"
-verify_only = "{{ verify_only }}"
-[component.validate-cttt.build]
-command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
-workdir = "validate-cttt"
-watch = ["**/*.go", "go.mod"]
-
-[[trigger.http]]
-route = "/validate-colorcloud/..."
-component = "validate-colorcloud"
-
-[component.validate-colorcloud]
-source = "validate-colorcloud/main.wasm"
-allowed_outbound_hosts = [
-    "https://bsky.social",
-    "https://*.bsky.network",
-    "https://sessionize.com",
-]
-key_value_stores = ["default"]
-[component.validate-colorcloud.variables]
-bsky_handle = "{{ bsky_handle }}"
-bsky_password = "{{ bsky_password }}"
-bsky_did = "{{ bsky_did }}"
-bsky_labeler_did = "{{ bsky_labeler_did }}"
-verify_only = "{{ verify_only }}"
-[component.validate-colorcloud.build]
-command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
-workdir = "validate-colorcloud"
-watch = ["**/*.go", "go.mod"]
-
-[[trigger.http]]
 route = "/validate-awshero/..."
 component = "validate-awshero"
 
@@ -352,29 +283,6 @@ verify_only = "{{ verify_only }}"
 [component.validate-ibmchamp.build]
 command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
 workdir = "validate-ibmchamp"
-watch = ["**/*.go", "go.mod"]
-
-[[trigger.http]]
-route = "/validate-nordicsummit/..."
-component = "validate-nordicsummit"
-
-[component.validate-nordicsummit]
-source = "validate-nordicsummit/main.wasm"
-allowed_outbound_hosts = [
-    "https://bsky.social",
-    "https://*.bsky.network",
-    "https://sessionize.com",
-]
-key_value_stores = ["default"]
-[component.validate-nordicsummit.variables]
-bsky_handle = "{{ bsky_handle }}"
-bsky_password = "{{ bsky_password }}"
-bsky_did = "{{ bsky_did }}"
-bsky_labeler_did = "{{ bsky_labeler_did }}"
-verify_only = "{{ verify_only }}"
-[component.validate-nordicsummit.build]
-command = "tinygo build -target=wasi -gc=leaking -no-debug -o main.wasm main.go"
-workdir = "validate-nordicsummit"
 watch = ["**/*.go", "go.mod"]
 
 [[trigger.http]]
