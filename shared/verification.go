@@ -44,14 +44,8 @@ func GetModuleSpecifics(moduleKey string) (ModuleSpecifics, error) {
 		return getOracleAceModuleSpecifics(), nil
 	case "cncfamb":
 		return getCncfAmbModuleSpecifics(), nil
-	case "cttt":
-		return getCtttModuleSpecifics(), nil
-	case "colorcloud":
-		return getColorCloudModuleSpecifics(), nil
-	case "dynamicsminds":
-		return getDynamicsMindsModuleSpecifics(), nil
-	case "nordicsummit":
-		return getNordicSummitModuleSpecifics(), nil
+	case "afm":
+		return getAfmModuleSpecifics(), nil
 	default:
 		return ModuleSpecifics{}, fmt.Errorf("unknown module key: %s", moduleKey)
 	}
@@ -343,52 +337,13 @@ func getCncfAmbModuleSpecifics() ModuleSpecifics {
 	}
 }
 
-func getCtttModuleSpecifics() ModuleSpecifics {
+func getAfmModuleSpecifics() ModuleSpecifics {
 	return ModuleSpecifics{
-		ModuleKey:            "cttt",
-		ModuleName:           "Cloud Technology Townhall Tallinn speakers",
-		ModuleNameShortened:  "CTTT speakers",
-		ModuleLabel:          "cttt",
-		ExplanationText:      "This is your name, exactly as it appears on the CTTT speakers page and on Sessionize. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) as link of type \"Other\" on your Sessionize profile.",
-		FirstAndSecondLevel:  make(map[string][]string),
-		Level1TranslationMap: make(map[string]string),
-		Level2TranslationMap: make(map[string]string),
-	}
-}
-
-func getColorCloudModuleSpecifics() ModuleSpecifics {
-	return ModuleSpecifics{
-		ModuleKey:            "colorcloud",
-		ModuleName:           "ColorCloud speakers",
-		ModuleNameShortened:  "ColorCloud speakers",
-		ModuleLabel:          "colorcloud",
-		ExplanationText:      "This is your name, exactly as it appears on the ColorCloud speakers page and on Sessionize. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) as link of type \"Other\" on your Sessionize profile.",
-		FirstAndSecondLevel:  make(map[string][]string),
-		Level1TranslationMap: make(map[string]string),
-		Level2TranslationMap: make(map[string]string),
-	}
-}
-
-func getDynamicsMindsModuleSpecifics() ModuleSpecifics {
-	return ModuleSpecifics{
-		ModuleKey:            "dynamicsminds",
-		ModuleName:           "DynamicsMinds speakers",
-		ModuleNameShortened:  "DynamicsMinds",
-		ModuleLabel:          "dynamicsminds",
-		ExplanationText:      "This is your name, exactly as it appears on the DynamicsMinds speakers page. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) somewhere in your biography.",
-		FirstAndSecondLevel:  make(map[string][]string),
-		Level1TranslationMap: make(map[string]string),
-		Level2TranslationMap: make(map[string]string),
-	}
-}
-
-func getNordicSummitModuleSpecifics() ModuleSpecifics {
-	return ModuleSpecifics{
-		ModuleKey:            "nordicsummit",
-		ModuleName:           "Nordic Summit speakers",
-		ModuleNameShortened:  "Nordic Summit speakers",
-		ModuleLabel:          "nordicsummit",
-		ExplanationText:      "This is your name, exactly as it appears on the Nordic Summit speakers page and on Sessionize. For this to work, you need to have the link to your Bluesky profile (https://bsky.app/profile/...) as link of type \"Other\" on your Sessionize profile.",
+		ModuleKey:            "afm",
+		ModuleName:           "Apache Foundation Members",
+		ModuleNameShortened:  "Apache Foundation Members",
+		ModuleLabel:          "afm",
+		ExplanationText:      "This is your ID in the Apache Foundation Members list. You can find it at https://www.apache.org/foundation/members.html. For this to work, you need to have the link to your Bluesky profile in the social links in the Apache Foundation Members phonebook at https://people.apache.org/phonebook.html.",
 		FirstAndSecondLevel:  make(map[string][]string),
 		Level1TranslationMap: make(map[string]string),
 		Level2TranslationMap: make(map[string]string),
