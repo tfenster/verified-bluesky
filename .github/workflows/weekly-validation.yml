@@ -34,6 +34,15 @@ jobs:
             while [ $attempt -le $max_attempts ]; do
               echo "Attempt $attempt of $max_attempts for: $url" >&2
 
+              # Check for HTTP 500 first (before using -f flag)
+              local status_check
+              status_check=$(curl -sS -o /dev/null -w '%{http_code}' "$url" 2>/dev/null || echo "000")
+              if [ "$status_check" -ge 500 ] && [ "$status_check" -lt 600 ]; then
+                echo "HTTP $status_check error detected. Backing off for 70 minutes..." >&2
+                sleep 4200  # 70 minutes = 4200 seconds
+                continue  # Retry without incrementing attempt counter
+              fi
+
               # Use -f to make curl fail on HTTP errors; -S for error messages
               if response=$(curl -sSf "$url"); then
                 echo "Success on attempt $attempt" >&2
@@ -103,6 +112,16 @@ jobs:
             local max_attempts=3 attempt=1 delay=5
             while [ $attempt -le $max_attempts ]; do
               echo "[retry_curl] Attempt $attempt/$max_attempts $method $url" >&2
+              
+              # Check for HTTP 500 first (before using -f flag)
+              local status_check
+              status_check=$(curl -sS -o /dev/null -w '%{http_code}' -X "$method" "${header_opts[@]}" ${data:+-d "$data"} "$url" 2>/dev/null || echo "000")
+              if [ "$status_check" -ge 500 ] && [ "$status_check" -lt 600 ]; then
+                echo "[retry_curl] HTTP $status_check error detected. Backing off for 70 minutes..." >&2
+                sleep 4200  # 70 minutes = 4200 seconds
+                continue  # Retry without incrementing attempt counter
+              fi
+
               if response=$(curl -sSf -X "$method" "${header_opts[@]}" ${data:+-d "$data"} "$url"); then
                 printf '%s' "$response"
                 return 0
