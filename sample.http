@@ -36,6 +36,16 @@ Content-Type: text/json
 }
 
 ###
+# test whitespace trimming - this should work the same as the clean request above
+POST {{baseurl}}/validate-mvp?verify_only=true
+Content-Type: text/json
+
+{
+    "bskyHandle": "  tobiasfenster.io  ",
+    "verificationId": "  2efc9bb2-6a8c-e711-811e-3863bb36edf8  "
+}
+
+###
 # delete
 DELETE {{baseurl}}/validate-rd/<pwd>
 Content-Type: text/plain
@@ -193,4 +203,14 @@ Content-Type: text/json
 {
     "bskyHandle": "richard.fichtner.dev",
     "verificationId": "rfichtner"
+}
+
+###
+# Apache Foundation Member
+POST {{testurl}}afm
+Content-Type: text/json
+
+{
+    "bskyHandle": "bmarwell.de",
+    "verificationId": "bmarwell"
 }
