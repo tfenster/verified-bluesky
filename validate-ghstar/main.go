@@ -28,7 +28,7 @@ func init() {
 	moduleSpecifics, _ := shared.GetModuleSpecifics("ghstar")
 
 	moduleSpecifics.VerificationFunc = func(verificationId string, bskyHandle string) (bool, error) {
-		fmt.Println("Validating Github Star with ID: " + verificationId)
+		fmt.Println("Validating GitHub Star with ID: " + verificationId)
 
 		// GraphQL query to get the user's links
 		graphqlQuery := map[string]interface{}{
