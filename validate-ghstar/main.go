@@ -36,7 +36,18 @@ func init() {
 			"variables": map[string]interface{}{
 				"username": verificationId,
 			},
-			"query": "query GetStars($username: String!) {\n  publicProfile(username: $username) {\n    username\n    links {\n      id\n      link\n      platform\n      __typename\n    }\n    }\n}",
+			"query": `
+query GetStars($username: String!) {
+  publicProfile(username: $username) {
+    username
+    links {
+      id
+      link
+      platform
+      __typename
+    }
+  }
+}`,
 		}
 
 		payload, err := json.Marshal(graphqlQuery)
