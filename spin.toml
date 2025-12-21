@@ -2,7 +2,7 @@ spin_manifest_version = 2
 
 [application]
 name = "verified-bluesky"
-version = "0.19.0"
+version = "0.19.1"
 authors = ["tobiasfenster.io"]
 description = "Backend and frontend for Bluesky account verification and storage"
 
@@ -139,7 +139,7 @@ component = "validate-ghstar"
 source = "validate-ghstar/main.wasm"
 allowed_outbound_hosts = [
     "https://bsky.social",
-    "https://stars.github.com",
+    "https://api-stars.github.com",
     "https://*.bsky.network",
 ]
 key_value_stores = ["default"]
