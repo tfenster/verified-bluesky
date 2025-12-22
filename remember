@@ -7,6 +7,8 @@ export SPIN_VARIABLE_VERIFY_ONLY="true"
 export SPIN_VARIABLE_VALIDATION_BASE_URL="http://localhost:3000"
 export SPIN_VARIABLE_BSKY_PASSWORD="..."
 
+echo "Run spin up --runtime-config-file runtime-config.toml to start the app."
+
 # spin cloud variables list --app verified-bluesky
 # spin cloud variables set kv_explorer_password="..." --app verified-bluesky
 
