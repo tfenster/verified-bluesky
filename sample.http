@@ -191,8 +191,8 @@ POST {{testurl}}awshero
 Content-Type: text/json
 
 {
-    "bskyHandle": "eminalemdar.bsky.social",
-    "verificationId": "emin-alemdar"
+    "bskyHandle": "eminalemdar.dev",
+    "verificationId": "eminalemdar"
 }
 
 ###
