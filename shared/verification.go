@@ -245,7 +245,7 @@ func getAwsHeroModuleSpecifics() ModuleSpecifics {
 		ModuleName:           "AWS Heroes",
 		ModuleNameShortened:  "AWS Heroes",
 		ModuleLabel:          "awshero",
-		ExplanationText:      "This is your ID in the AWS Heroes list. If you open your profile, it is the last part of the URL after https://builder.aws.com/community/heroes/. For this to work, you need to have the link to your Bluesky profile in the social links on your AWS Hero profile.",
+		ExplanationText:      "This is your AWS Heroes alias / handle. For this to work, you need to have the link to your Bluesky profile in the social links on your AWS Hero profile.",
 		FirstAndSecondLevel:  make(map[string][]string),
 		Level1TranslationMap: make(map[string]string),
 		Level2TranslationMap: make(map[string]string),
